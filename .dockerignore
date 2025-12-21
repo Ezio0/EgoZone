@@ -1,0 +1,44 @@
+# 忽略不需要的文件
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.so
+
+# 环境和配置
+.env
+.env.local
+.env.*.local
+venv/
+.venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# 测试和缓存
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+
+# 本地数据（生产环境使用云存储）
+data/
+*.db
+*.sqlite
+
+# Git
+.git/
+.gitignore
+
+# 文档
+*.md
+!README.md
+
+# 其他
+*.log
+logs/

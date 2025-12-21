@@ -1,0 +1,40 @@
+# EgoZone Data
+/data/
+*.db
+*.sqlite
+
+# ChromaDB
+/data/knowledge/chromadb/
+
+# Environment
+.env
+.env.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+venv/
+.venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Node (for web frontend)
+node_modules/
+.next/
+dist/
+build/
