@@ -928,25 +928,325 @@ body {
     justify-content: flex-end;
 }
 
-/* Responsive */
+/* Mobile Menu Toggle */
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    width: 44px;
+    height: 44px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    z-index: 101;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.mobile-menu-toggle:hover {
+    background: var(--bg-tertiary);
+}
+
+/* Mobile Overlay */
+.mobile-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+}
+
+.mobile-overlay.show {
+    display: block;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 1024px) {
+    .chat-container {
+        padding: 0 16px;
+    }
+
+    .interview-container,
+    .knowledge-container,
+    .settings-container {
+        padding: 0 16px 48px;
+    }
+
+    .knowledge-stats {
+        flex-wrap: wrap;
+    }
+
+    .stat-card {
+        min-width: 45%;
+    }
+}
+
+/* Responsive - Mobile */
 @media (max-width: 768px) {
+
+    /* Show mobile menu toggle */
+    .mobile-menu-toggle {
+        display: flex;
+    }
+
+    /* Sidebar as drawer */
     .sidebar {
         position: fixed;
         left: -100%;
+        top: 0;
         z-index: 100;
         height: 100%;
+        width: 280px;
         transition: left var(--transition-normal);
+        box-shadow: var(--shadow-lg);
     }
 
     .sidebar.open {
         left: 0;
     }
 
+    /* Main content full width */
     .main-content {
         width: 100%;
+        margin-left: 0;
+    }
+
+    /* Chat adjustments */
+    .chat-container {
+        padding: 0 12px;
+        max-width: 100%;
+    }
+
+    .chat-header {
+        padding: 70px 0 16px;
+    }
+
+    .chat-title h1 {
+        font-size: 20px;
     }
 
     .message-bubble {
         max-width: 85%;
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+
+    .message-avatar {
+        width: 32px;
+        height: 32px;
+        font-size: 14px;
+    }
+
+    .welcome-message {
+        flex-direction: column;
+        text-align: center;
+        padding: 20px;
+    }
+
+    .welcome-avatar {
+        font-size: 36px;
+    }
+
+    .welcome-content h2 {
+        font-size: 16px;
+    }
+
+    .welcome-content p {
+        font-size: 14px;
+    }
+
+    /* Chat input */
+    .chat-input-container {
+        padding: 12px 0 16px;
+    }
+
+    .input-wrapper {
+        padding: 10px 12px;
+    }
+
+    #chat-input {
+        font-size: 14px;
+    }
+
+    .send-button {
+        width: 36px;
+        height: 36px;
+    }
+
+    .input-hint {
+        font-size: 11px;
+    }
+
+    /* Page headers */
+    .page-header {
+        padding: 60px 0 16px;
+        margin-bottom: 16px;
+    }
+
+    .page-header h1 {
+        font-size: 22px;
+    }
+
+    /* Interview, Knowledge, Settings */
+    .interview-container,
+    .knowledge-container,
+    .settings-container {
+        padding: 0 12px 32px;
+        max-width: 100%;
+    }
+
+    .progress-card {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    .interview-card {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .question-text {
+        font-size: 16px;
+    }
+
+    .answer-input,
+    .knowledge-textarea {
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    .interview-actions,
+    .knowledge-actions {
+        flex-direction: column;
+    }
+
+    .interview-actions .btn,
+    .knowledge-actions .btn {
+        width: 100%;
+    }
+
+    /* Categories grid */
+    .categories-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+
+    .category-card {
+        padding: 12px;
+    }
+
+    .category-card h4 {
+        font-size: 13px;
+    }
+
+    .category-card p {
+        font-size: 11px;
+    }
+
+    /* Knowledge stats */
+    .knowledge-stats {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 16px;
+    }
+
+    .stat-number {
+        font-size: 28px;
+    }
+
+    .add-knowledge-card,
+    .settings-card {
+        padding: 16px;
+        margin-bottom: 16px;
+    }
+
+    /* Form groups */
+    .form-group input,
+    .form-group select {
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+
+    /* Buttons */
+    .btn {
+        padding: 12px 20px;
+        font-size: 14px;
+        width: 100%;
+    }
+
+    /* Modal */
+    .modal-content {
+        margin: 16px;
+        max-width: calc(100% - 32px);
+    }
+
+    .modal-header {
+        padding: 16px 20px;
+    }
+
+    .modal-header h2 {
+        font-size: 16px;
+    }
+
+    .modal-body {
+        padding: 20px;
+    }
+
+    /* Admin button */
+    .admin-btn {
+        padding: 12px 16px;
+        font-size: 14px;
+    }
+
+    /* Sidebar footer */
+    .sidebar-footer {
+        padding: 16px 20px;
+    }
+
+    /* Knowledge list */
+    .knowledge-item {
+        padding: 12px;
+    }
+
+    .knowledge-item-title {
+        font-size: 14px;
+    }
+
+    .knowledge-item-content {
+        font-size: 13px;
+    }
+}
+
+/* Responsive - Small Mobile */
+@media (max-width: 480px) {
+    .chat-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .categories-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .message-bubble {
+        max-width: 90%;
+    }
+
+    .logo-text {
+        font-size: 18px;
+    }
+
+    .nav-item {
+        padding: 12px 14px;
     }
 }

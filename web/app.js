@@ -641,6 +641,41 @@ function switchPage(pageName) {
     }
 }
 
+// ========== 移动端菜单 ==========
+
+function initMobileMenu() {
+    const menuToggle = document.getElementById('mobile-menu-toggle');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('mobile-overlay');
+
+    if (!menuToggle || !sidebar || !overlay) return;
+
+    // 点击菜单按钮
+    menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('show');
+        menuToggle.textContent = sidebar.classList.contains('open') ? '✕' : '☰';
+    });
+
+    // 点击遮罩层关闭菜单
+    overlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('show');
+        menuToggle.textContent = '☰';
+    });
+
+    // 点击导航项后关闭菜单（移动端）
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (window.innerWidth <= 768) {
+                sidebar.classList.remove('open');
+                overlay.classList.remove('show');
+                menuToggle.textContent = '☰';
+            }
+        });
+    });
+}
+
 // ========== 初始化 ==========
 
 function init() {
@@ -650,6 +685,7 @@ function init() {
     initKnowledge();
     initSettings();
     initAdmin();
+    initMobileMenu();
 
     console.log('🚀 EgoZone Web 应用已启动');
 }
