@@ -81,3 +81,45 @@ async def admin_logout(request: VerifyRequest):
 def is_admin_token_valid(token: str) -> bool:
     """检查令牌是否有效"""
     return token in valid_tokens
+
+
+# 公共访问令牌
+access_tokens = set()
+
+
+class AccessLoginRequest(BaseModel):
+    """公共访问登录请求"""
+    password: str
+
+
+@router.post("/access-login")
+async def access_login(request: AccessLoginRequest):
+    """
+    公共访问验证
+    验证密码以获取访问对话功能的权限
+    """
+    settings = get_settings()
+    
+    if request.password == settings.access_password:
+        token = secrets.token_urlsafe(32)
+        access_tokens.add(token)
+        return {
+            "success": True,
+            "token": token,
+            "message": "验证成功"
+        }
+    else:
+        return {
+            "success": False,
+            "token": None,
+            "message": "密码错误"
+        }
+
+
+@router.post("/verify-access")
+async def verify_access_token(request: VerifyRequest):
+    """
+    验证公共访问令牌是否有效
+    """
+    is_valid = request.token in access_tokens
+    return {"valid": is_valid}

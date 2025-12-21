@@ -676,6 +676,98 @@ function initMobileMenu() {
     });
 }
 
+// ========== 公共访问验证 ==========
+
+state.hasAccess = false;
+state.accessToken = localStorage.getItem('accessToken') || null;
+
+function initAccessCheck() {
+    const accessModal = document.getElementById('access-modal');
+    const accessPassword = document.getElementById('access-password');
+    const accessSubmitBtn = document.getElementById('access-submit-btn');
+
+    if (!accessModal || !accessPassword || !accessSubmitBtn) return;
+
+    // 检查是否已有访问权限
+    if (state.accessToken) {
+        verifyAccessToken();
+    } else {
+        showAccessModal();
+    }
+
+    // 提交验证
+    accessSubmitBtn.addEventListener('click', submitAccessPassword);
+    accessPassword.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            submitAccessPassword();
+        }
+    });
+}
+
+function showAccessModal() {
+    const accessModal = document.getElementById('access-modal');
+    if (accessModal) {
+        accessModal.classList.add('show');
+        document.getElementById('access-password').focus();
+    }
+}
+
+function hideAccessModal() {
+    const accessModal = document.getElementById('access-modal');
+    if (accessModal) {
+        accessModal.classList.remove('show');
+    }
+}
+
+async function submitAccessPassword() {
+    const password = document.getElementById('access-password').value;
+    if (!password) {
+        showToast('请输入访问密码', 'error');
+        return;
+    }
+
+    try {
+        const response = await apiRequest('/auth/access-login', {
+            method: 'POST',
+            body: JSON.stringify({ password })
+        });
+
+        if (response.success) {
+            state.accessToken = response.token;
+            state.hasAccess = true;
+            localStorage.setItem('accessToken', response.token);
+            hideAccessModal();
+            showToast('验证成功，欢迎使用！');
+        } else {
+            showToast(response.message || '密码错误', 'error');
+        }
+    } catch (error) {
+        showToast('验证失败', 'error');
+    }
+}
+
+async function verifyAccessToken() {
+    try {
+        const response = await apiRequest('/auth/verify-access', {
+            method: 'POST',
+            body: JSON.stringify({ token: state.accessToken })
+        });
+
+        if (response.valid) {
+            state.hasAccess = true;
+            hideAccessModal();
+        } else {
+            localStorage.removeItem('accessToken');
+            state.accessToken = null;
+            state.hasAccess = false;
+            showAccessModal();
+        }
+    } catch (error) {
+        // 验证失败，显示弹窗
+        showAccessModal();
+    }
+}
+
 // ========== 初始化 ==========
 
 function init() {
@@ -686,6 +778,7 @@ function init() {
     initSettings();
     initAdmin();
     initMobileMenu();
+    initAccessCheck();
 
     console.log('🚀 EgoZone Web 应用已启动');
 }

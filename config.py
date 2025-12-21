@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     # 管理员密码（用于访问问答采集、知识库、设置功能）
     admin_password: str = "admin123"  # 请在生产环境修改
     
+    # 公共访问密码（用于访问对话功能，防止恶意攻击）
+    access_password: str = "123321abc0"  # 请在生产环境修改
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
