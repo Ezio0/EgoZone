@@ -37,14 +37,14 @@ gcloud billing projects link egozone --billing-account=YOUR_BILLING_ACCOUNT_ID
 ### 3. 设置环境变量
 
 ```bash
-# 设置你的 Gemini API Key
-export GEMINI_API_KEY="AIzaSyBcicAB7crjX3g_7ENu9f6PB_bB6HFkAjo"
-
 # 设置项目 ID
 export GCP_PROJECT_ID="egozone"
 
 # 设置区域（推荐亚洲区域）
 export GCP_REGION="asia-east1"  # 台湾，网络延迟较低
+
+# 注意：无需设置 GEMINI_API_KEY
+# 本项目使用 Vertex AI 服务账号自动认证
 ```
 
 ### 4. 一键部署
@@ -107,10 +107,10 @@ gcloud run services describe egozone --region=asia-east1
 # 查看日志
 gcloud run services logs read egozone --region=asia-east1
 
-# 更新环境变量
+# 更新环境变量（示例）
 gcloud run services update egozone \
     --region=asia-east1 \
-    --set-env-vars "GEMINI_API_KEY=新的Key"
+    --set-env-vars "ADMIN_PASSWORD=新密码"
 
 # 回滚到上一版本
 gcloud run services update-traffic egozone \
@@ -146,6 +146,6 @@ gcloud run services describe egozone --region=asia-east1 --format="yaml(status)"
 1. 在 Cloud Build 中创建触发器
 2. 连接 GitHub/GitLab 仓库
 3. 设置触发条件（如 push 到 main 分支）
-4. 添加环境变量 `_GEMINI_API_KEY`
+4. 无需配置 API Key（使用 Vertex AI 服务账号）
 
 每次代码推送后会自动构建并部署！
