@@ -87,15 +87,26 @@ class UserProfileManager:
     def __init__(self, data_dir: str = "./data"):
         self.data_dir = Path(data_dir)
         self.profile_path = self.data_dir / "user_profile.json"
+        self.gcs_path = "data/user_profile.json"  # GCS 中的路径
         self.profile: Optional[UserProfile] = None
+        self._gcs_storage = None
+    
+    @property
+    def gcs_storage(self):
+        """延迟导入 GCS 存储"""
+        if self._gcs_storage is None:
+            from core.storage import get_gcs_storage
+            self._gcs_storage = get_gcs_storage()
+        return self._gcs_storage
         
     async def initialize(self):
         """初始化，加载或创建用户画像"""
         self.data_dir.mkdir(parents=True, exist_ok=True)
         
-        if self.profile_path.exists():
-            await self.load()
-        else:
+        # 优先从 GCS 加载
+        await self.load()
+        
+        if self.profile is None:
             # 创建默认画像（包含用户提供的背景信息）
             self.profile = UserProfile(
                 education="计算机专业本科",
@@ -109,20 +120,43 @@ class UserProfileManager:
             await self.save()
     
     async def load(self):
-        """加载用户画像"""
+        """加载用户画像（优先 GCS，其次本地）"""
         try:
-            with open(self.profile_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            self.profile = UserProfile(**data)
+            # 首先尝试从 GCS 加载
+            if self.gcs_storage.use_gcs:
+                data = self.gcs_storage.download_json(self.gcs_path)
+                if data:
+                    self.profile = UserProfile(**data)
+                    # 同步到本地
+                    with open(self.profile_path, 'w', encoding='utf-8') as f:
+                        json.dump(data, f, ensure_ascii=False, indent=2, default=str)
+                    return
+            
+            # 从本地加载
+            if self.profile_path.exists():
+                with open(self.profile_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                self.profile = UserProfile(**data)
         except Exception as e:
             print(f"加载用户画像失败: {e}")
-            self.profile = UserProfile()
+            self.profile = None
     
     async def save(self):
-        """保存用户画像"""
+        """保存用户画像（同时保存到本地和 GCS）"""
+        if not self.profile:
+            return
+            
         try:
+            data = self.profile.model_dump()
+            
+            # 保存到本地
             with open(self.profile_path, 'w', encoding='utf-8') as f:
-                json.dump(self.profile.model_dump(), f, ensure_ascii=False, indent=2, default=str)
+                json.dump(data, f, ensure_ascii=False, indent=2, default=str)
+            
+            # 同步到 GCS
+            if self.gcs_storage.use_gcs:
+                self.gcs_storage.upload_json(data, self.gcs_path)
+                
         except Exception as e:
             print(f"保存用户画像失败: {e}")
     

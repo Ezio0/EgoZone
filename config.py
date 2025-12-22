@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     # 公共访问密码（用于访问对话功能，防止恶意攻击）
     access_password: str = "123321abc0"  # 请在生产环境修改
     
+    # Google Cloud Storage（持久化存储）
+    gcs_bucket: Optional[str] = "egozone-data"
+    use_gcs: bool = True  # 生产环境设为 True
+    
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

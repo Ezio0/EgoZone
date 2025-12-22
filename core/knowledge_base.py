@@ -60,17 +60,32 @@ class KnowledgeBase:
             collection_name: ChromaDB 集合名称
         """
         self.data_dir = Path(data_dir)
+        self.chromadb_path = self.data_dir / "chromadb"
+        self.gcs_prefix = "data/knowledge/chromadb"  # GCS 中的路径
         self.collection_name = collection_name
         self.client: Optional[chromadb.Client] = None
         self.collection: Optional[Any] = None
+        self._gcs_storage = None
+    
+    @property
+    def gcs_storage(self):
+        """延迟导入 GCS 存储"""
+        if self._gcs_storage is None:
+            from core.storage import get_gcs_storage
+            self._gcs_storage = get_gcs_storage()
+        return self._gcs_storage
     
     async def initialize(self):
         """初始化知识库"""
         self.data_dir.mkdir(parents=True, exist_ok=True)
         
+        # 从 GCS 下载 ChromaDB 数据（如果存在）
+        if self.gcs_storage.use_gcs:
+            self.gcs_storage.download_directory(self.gcs_prefix, str(self.chromadb_path))
+        
         # 初始化 ChromaDB（使用持久化存储）
         self.client = chromadb.PersistentClient(
-            path=str(self.data_dir / "chromadb")
+            path=str(self.chromadb_path)
         )
         
         # 获取或创建集合
@@ -80,6 +95,11 @@ class KnowledgeBase:
         )
         
         print(f"📚 知识库初始化完成，当前文档数: {self.collection.count()}")
+    
+    async def sync_to_gcs(self):
+        """同步 ChromaDB 数据到 GCS"""
+        if self.gcs_storage.use_gcs:
+            self.gcs_storage.upload_directory(str(self.chromadb_path), self.gcs_prefix)
     
     async def add_document(
         self,
@@ -138,6 +158,9 @@ class KnowledgeBase:
             documents=documents,
             metadatas=metadatas
         )
+        
+        # 同步到 GCS
+        await self.sync_to_gcs()
         
         print(f"✅ 添加了 {len(chunks)} 个文档块")
         return doc_ids
