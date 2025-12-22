@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from config import get_settings
-from api import chat, knowledge, interview, auth
+from api import chat, knowledge, interview, auth, settings
 from core.gemini_client import GeminiClient
 from core.personality_engine import PersonalityEngine
 from core.knowledge_base import KnowledgeBase
@@ -83,6 +83,7 @@ app.include_router(chat.router, prefix="/api/chat", tags=["对话"])
 app.include_router(knowledge.router, prefix="/api/knowledge", tags=["知识库"])
 app.include_router(interview.router, prefix="/api/interview", tags=["问答采集"])
 app.include_router(auth.router, prefix="/api/auth", tags=["认证"])
+app.include_router(settings.router, prefix="/api/settings", tags=["设置"])
 
 # 静态文件服务
 WEB_DIR = Path(__file__).parent / "web"

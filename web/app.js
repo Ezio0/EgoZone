@@ -443,17 +443,55 @@ function renderKnowledgeList(documents) {
 
 function initSettings() {
     elements.saveSettingsBtn.addEventListener('click', saveSettings);
+    // 页面加载时获取设置
+    loadSettings();
 }
 
 async function loadSettings() {
-    // 设置默认值（后续可以从 API 加载）
-    elements.settingEducation.value = '计算机专业本科';
-    elements.settingProfession.value = '互联网产品经理';
+    try {
+        const response = await apiRequest('/settings/profile');
+        if (response) {
+            // 填充表单
+            if (elements.settingEducation) {
+                elements.settingEducation.value = response.education || '';
+            }
+            if (elements.settingProfession) {
+                elements.settingProfession.value = response.profession || '';
+            }
+        }
+    } catch (error) {
+        console.log('加载设置失败，使用默认值');
+        // 设置默认值
+        if (elements.settingEducation) {
+            elements.settingEducation.value = '计算机专业本科';
+        }
+        if (elements.settingProfession) {
+            elements.settingProfession.value = '互联网产品经理';
+        }
+    }
 }
 
 async function saveSettings() {
-    showToast('设置已保存！');
-    // TODO: 实现设置保存到后端
+    const education = elements.settingEducation?.value || '';
+    const profession = elements.settingProfession?.value || '';
+
+    try {
+        const response = await apiRequest('/settings/profile', {
+            method: 'PUT',
+            body: JSON.stringify({
+                education: education,
+                profession: profession
+            })
+        });
+
+        if (response.success) {
+            showToast('设置已保存！');
+        } else {
+            showToast('保存失败', 'error');
+        }
+    } catch (error) {
+        showToast('保存失败: ' + error.message, 'error');
+    }
 }
 
 // ========== 管理员认证 ==========
