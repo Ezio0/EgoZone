@@ -15,9 +15,11 @@ class Settings(BaseSettings):
     debug: bool = True
     secret_key: str = "change-me-in-production"
     
-    # Gemini API
-    gemini_api_key: str
-    gemini_model: str = "gemini-2.0-flash"  # 可切换为 gemini-pro
+    # Gemini / Vertex AI 配置
+    gemini_api_key: Optional[str] = None  # 使用服务账号时不需要
+    gemini_model: str = "gemini-2.0-flash-001"
+    gcp_project: str = "egozone"  # GCP 项目 ID
+    gcp_location: str = "asia-east1"  # Vertex AI 区域
     
     # 数据库
     database_url: str = "sqlite:///./egozone.db"
@@ -32,7 +34,7 @@ class Settings(BaseSettings):
     google_cloud_project: Optional[str] = None
     
     # 管理员密码（用于访问问答采集、知识库、设置功能）
-    admin_password: str = "admin123"  # 请在生产环境修改
+    admin_password: str = "Wuya2bu2.egozone"  # 请在生产环境修改
     
     # 公共访问密码（用于访问对话功能，防止恶意攻击）
     access_password: str = "123321abc0"  # 请在生产环境修改

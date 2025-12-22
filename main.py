@@ -34,8 +34,12 @@ async def lifespan(app: FastAPI):
     # 初始化核心组件
     print("🚀 正在初始化 EgoZone...")
     
-    # Gemini 客户端
-    gemini_client = GeminiClient(api_key=settings.gemini_api_key)
+    # Gemini 客户端 (Vertex AI)
+    gemini_client = GeminiClient(
+        project_id=settings.gcp_project,
+        location=settings.gcp_location,
+        model_name=settings.gemini_model
+    )
     
     # 知识库
     knowledge_base = KnowledgeBase()
