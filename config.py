@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     gemini_api_key: Optional[str] = None  # 使用服务账号时不需要
     gemini_model: str = "gemini-2.0-flash-001"
     gcp_project: str = "egozone"  # GCP 项目 ID
-    gcp_location: str = "asia-east1"  # Vertex AI 区域
+    gcp_location: str = "us-central1"  # Vertex AI 区域 (模型支持最好的区域)
     
     # 数据库
     database_url: str = "sqlite:///./egozone.db"
