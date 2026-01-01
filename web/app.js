@@ -2,6 +2,9 @@
  * EgoZone - Web 应用 JavaScript
  */
 
+// ⚠️ 本地调试模式：设为 true 跳过所有密码验证
+const DEBUG_MODE = true;
+
 // API 基础 URL（自动检测环境）
 const API_BASE = window.location.origin + '/api';
 
@@ -645,9 +648,9 @@ function updateAdminUI() {
 // 修改导航函数以检查权限
 const originalSwitchPage = switchPage;
 function switchPage(pageName) {
-    // 检查是否需要管理员权限
+    // 检查是否需要管理员权限（调试模式跳过）
     const adminPages = ['interview', 'knowledge', 'settings'];
-    if (adminPages.includes(pageName) && !state.isAdmin) {
+    if (!DEBUG_MODE && adminPages.includes(pageName) && !state.isAdmin) {
         showLoginModal();
         return;
     }
@@ -720,6 +723,14 @@ state.hasAccess = false;
 state.accessToken = localStorage.getItem('accessToken') || null;
 
 function initAccessCheck() {
+    // 调试模式：直接跳过密码验证，设置为管理员
+    if (DEBUG_MODE) {
+        state.hasAccess = true;
+        state.isAdmin = true;
+        updateAdminUI();
+        return;
+    }
+
     const accessModal = document.getElementById('access-modal');
     const accessPassword = document.getElementById('access-password');
     const accessSubmitBtn = document.getElementById('access-submit-btn');

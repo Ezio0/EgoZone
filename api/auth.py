@@ -11,6 +11,9 @@ import secrets
 
 router = APIRouter()
 
+# ⚠️ 本地调试模式：设为 True 跳过密码验证
+DEBUG_MODE = True
+
 # 用于存储已验证的 session token（简单实现，生产环境建议使用 Redis）
 valid_tokens = set()
 
@@ -41,7 +44,7 @@ async def admin_login(request: LoginRequest):
     """
     settings = get_settings()
     
-    if request.password == settings.admin_password:
+    if DEBUG_MODE or request.password == settings.admin_password:
         # 生成随机 token
         token = secrets.token_urlsafe(32)
         valid_tokens.add(token)
@@ -100,7 +103,7 @@ async def access_login(request: AccessLoginRequest):
     """
     settings = get_settings()
     
-    if request.password == settings.access_password:
+    if DEBUG_MODE or request.password == settings.access_password:
         token = secrets.token_urlsafe(32)
         access_tokens.add(token)
         return {
