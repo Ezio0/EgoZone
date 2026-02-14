@@ -65,8 +65,20 @@ function showToast(message, type = 'success') {
     elements.toast.textContent = message;
     elements.toast.className = `toast show ${type}`;
     setTimeout(() => {
-        elements.toast.classList.remove('show');
+        if (elements.toast) elements.toast.classList.remove('show');
     }, 3000);
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
 async function apiRequest(endpoint, options = {}) {
@@ -446,6 +458,17 @@ function renderKnowledgeList(documents) {
 
 function initSettings() {
     elements.saveSettingsBtn.addEventListener('click', saveSettings);
+
+    // 自动保存逻辑
+    const debouncedSave = debounce(saveSettings, 1000);
+
+    // 为所有设置项添加监听器
+    if (elements.settingName) elements.settingName.addEventListener('input', debouncedSave);
+    if (elements.settingEducation) elements.settingEducation.addEventListener('input', debouncedSave);
+    if (elements.settingProfession) elements.settingProfession.addEventListener('input', debouncedSave);
+    if (elements.settingTone) elements.settingTone.addEventListener('change', debouncedSave);
+    if (elements.settingEmoji) elements.settingEmoji.addEventListener('change', debouncedSave);
+
     // 页面加载时获取设置
     loadSettings();
 }
@@ -455,11 +478,20 @@ async function loadSettings() {
         const response = await apiRequest('/settings/profile');
         if (response) {
             // 填充表单
+            if (elements.settingName) {
+                elements.settingName.value = response.name || '';
+            }
             if (elements.settingEducation) {
                 elements.settingEducation.value = response.education || '';
             }
             if (elements.settingProfession) {
                 elements.settingProfession.value = response.profession || '';
+            }
+            if (elements.settingTone) {
+                elements.settingTone.value = response.tone_of_voice || '温和';
+            }
+            if (elements.settingEmoji) {
+                elements.settingEmoji.value = response.emoji_usage || 'moderate';
             }
         }
     } catch (error) {
@@ -475,27 +507,52 @@ async function loadSettings() {
 }
 
 async function saveSettings() {
+    const name = elements.settingName?.value || '';
     const education = elements.settingEducation?.value || '';
     const profession = elements.settingProfession?.value || '';
+    const tone = elements.settingTone?.value || '温和';
+    const emoji = elements.settingEmoji?.value || 'moderate';
+
+    // 显示正在保存状态（可选，如果是自动保存不要太打扰）
+    const isAutoSave = (event && event.type !== 'click');
+    if (!isAutoSave) {
+        elements.saveSettingsBtn.textContent = '保存中...';
+        elements.saveSettingsBtn.disabled = true;
+    } else {
+        // 可以在角落显示一个小提示
+        showToast('正在保存...', 'info');
+    }
 
     try {
         const response = await apiRequest('/settings/profile', {
             method: 'PUT',
             body: JSON.stringify({
+                name: name,
                 education: education,
-                profession: profession
+                profession: profession,
+                tone_of_voice: tone,
+                emoji_usage: emoji
             })
         });
 
         if (response.success) {
-            showToast('设置已保存！');
+            if (!isAutoSave) {
+                showToast('设置已保存！');
+            }
         } else {
             showToast('保存失败', 'error');
         }
     } catch (error) {
         showToast('保存失败: ' + error.message, 'error');
+    } finally {
+        if (!isAutoSave) {
+            elements.saveSettingsBtn.textContent = '保存设置';
+            elements.saveSettingsBtn.disabled = false;
+        }
     }
 }
+
+
 
 // ========== 管理员认证 ==========
 

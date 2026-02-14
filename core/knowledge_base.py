@@ -3,7 +3,7 @@
 基于向量数据库的语义检索系统
 """
 
-from typing import List, Dict, Optional, Any
+from typing import List, Dict, Optional, Any, Union  # 添加Union导入
 from datetime import datetime
 import chromadb
 from chromadb.config import Settings
@@ -294,10 +294,10 @@ class KnowledgeBase:
 
 class KnowledgeImporter:
     """知识导入器"""
-    
+
     def __init__(self, knowledge_base: KnowledgeBase):
         self.kb = knowledge_base
-    
+
     async def import_text(self, text: str, title: Optional[str] = None) -> List[str]:
         """导入纯文本"""
         return await self.kb.add_document(
@@ -306,7 +306,7 @@ class KnowledgeImporter:
             doc_type="text",
             metadata={"title": title} if title else None
         )
-    
+
     async def import_markdown(self, content: str, title: Optional[str] = None) -> List[str]:
         """导入 Markdown 文档"""
         # 简单处理 Markdown（去除一些格式符号）
@@ -315,14 +315,14 @@ class KnowledgeImporter:
         clean_content = re.sub(r'```[\s\S]*?```', '', content)  # 移除代码块
         clean_content = re.sub(r'!\[.*?\]\(.*?\)', '', clean_content)  # 移除图片
         clean_content = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', clean_content)  # 链接保留文字
-        
+
         return await self.kb.add_document(
             content=clean_content,
             source="document_import",
             doc_type="article",
             metadata={"title": title, "format": "markdown"}
         )
-    
+
     async def import_chat_history(
         self,
         messages: List[Dict],
@@ -330,25 +330,263 @@ class KnowledgeImporter:
     ) -> List[str]:
         """
         导入聊天记录
-        
+
         Args:
             messages: 消息列表 [{"role": "user/other", "content": "...", "timestamp": "..."}]
             platform: 平台来源
         """
         # 只保留用户自己说的话
         user_messages = [m for m in messages if m.get("role") == "user"]
-        
+
         if not user_messages:
             return []
-        
+
         # 合并用户消息
         combined_content = "\n".join([
             f"- {m['content']}" for m in user_messages
         ])
-        
+
         return await self.kb.add_document(
             content=combined_content,
             source="chat_import",
             doc_type="chat",
             metadata={"platform": platform, "message_count": len(user_messages)}
         )
+
+    async def import_pdf(self, file_path: str, title: Optional[str] = None) -> List[str]:
+        """
+        导入 PDF 文件
+
+        Args:
+            file_path: PDF 文件路径
+            title: 文档标题
+
+        Returns:
+            添加的文档 ID 列表
+        """
+        try:
+            import PyPDF2
+            import re
+
+            with open(file_path, 'rb') as file:
+                pdf_reader = PyPDF2.PdfReader(file)
+                text_content = ""
+
+                for page in pdf_reader.pages:
+                    text_content += page.extract_text() + "\n"
+
+                # 清理文本中的多余空白字符
+                text_content = re.sub(r'\s+', ' ', text_content)
+
+            return await self.kb.add_document(
+                content=text_content,
+                source="pdf_import",
+                doc_type="pdf",
+                metadata={
+                    "title": title or file_path,
+                    "format": "pdf",
+                    "page_count": len(pdf_reader.pages),
+                    "file_path": file_path
+                }
+            )
+        except ImportError:
+            raise ImportError("需要安装 PyPDF2: pip install PyPDF2")
+        except Exception as e:
+            print(f"导入 PDF 失败: {e}")
+            return []
+
+    async def import_docx(self, file_path: str, title: Optional[str] = None) -> List[str]:
+        """
+        导入 Word 文档 (DOCX)
+
+        Args:
+            file_path: DOCX 文件路径
+            title: 文档标题
+
+        Returns:
+            添加的文档 ID 列表
+        """
+        try:
+            from docx import Document
+            import re
+
+            doc = Document(file_path)
+            paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+            text_content = "\n".join(paragraphs)
+
+            # 清理文本中的多余空白字符
+            text_content = re.sub(r'\s+', ' ', text_content)
+
+            return await self.kb.add_document(
+                content=text_content,
+                source="docx_import",
+                doc_type="word",
+                metadata={
+                    "title": title or file_path,
+                    "format": "docx",
+                    "paragraph_count": len(paragraphs),
+                    "file_path": file_path
+                }
+            )
+        except ImportError:
+            raise ImportError("需要安装 python-docx: pip install python-docx")
+        except Exception as e:
+            print(f"导入 Word 文档失败: {e}")
+            return []
+
+    async def import_web_page(self, url: str, title: Optional[str] = None) -> List[str]:
+        """
+        导入网页内容
+
+        Args:
+            url: 网页 URL
+            title: 文档标题
+
+        Returns:
+            添加的文档 ID 列表
+        """
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+            import re
+
+            response = requests.get(url, headers={'User-Agent': 'Mozilla/5.0 (compatible; EgoZone Bot)'})
+            response.raise_for_status()
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+
+            # 移除脚本和样式元素
+            for script in soup(["script", "style"]):
+                script.decompose()
+
+            # 提取主要内容
+            content_selectors = ['main', '.content', '#content', 'article', '.post', '.entry-content']
+            content = None
+
+            for selector in content_selectors:
+                content = soup.select_one(selector)
+                if content:
+                    break
+
+            if not content:
+                content = soup.find('body')
+
+            text_content = content.get_text(strip=True, separator='\n') if content else soup.get_text(strip=True, separator='\n')
+
+            # 清理多余的空白字符
+            text_content = re.sub(r'\n\s*\n', '\n\n', text_content)
+            text_content = re.sub(r'[ \t]+', ' ', text_content)
+
+            return await self.kb.add_document(
+                content=text_content,
+                source="web_import",
+                doc_type="webpage",
+                metadata={
+                    "title": title or url,
+                    "url": url,
+                    "format": "webpage"
+                }
+            )
+        except ImportError:
+            raise ImportError("需要安装 requests 和 beautifulsoup4: pip install requests beautifulsoup4")
+        except Exception as e:
+            print(f"导入网页失败: {e}")
+            return []
+
+    async def import_json_data(self, data: Union[str, Dict, List], title: Optional[str] = None) -> List[str]:
+        """
+        导入 JSON 数据
+
+        Args:
+            data: JSON 字符串或对象
+            title: 文档标题
+
+        Returns:
+            添加的文档 ID 列表
+        """
+        import json
+        from typing import Union
+
+        try:
+            if isinstance(data, str):
+                parsed_data = json.loads(data)
+            else:
+                parsed_data = data
+
+            # 转换 JSON 数据为可读文本
+            def json_to_text(obj, indent=0):
+                text = ""
+                if isinstance(obj, dict):
+                    for key, value in obj.items():
+                        text += "  " * indent + f"{key}: "
+                        if isinstance(value, (dict, list)):
+                            text += "\n" + json_to_text(value, indent + 1)
+                        else:
+                            text += f"{value}\n"
+                elif isinstance(obj, list):
+                    for i, item in enumerate(obj):
+                        text += "  " * indent + f"[{i}]: "
+                        if isinstance(item, (dict, list)):
+                            text += "\n" + json_to_text(item, indent + 1)
+                        else:
+                            text += f"{item}\n"
+                else:
+                    text += f"{obj}\n"
+                return text
+
+            text_content = json_to_text(parsed_data)
+
+            return await self.kb.add_document(
+                content=text_content,
+                source="json_import",
+                doc_type="structured_data",
+                metadata={
+                    "title": title or "JSON Data",
+                    "format": "json",
+                    "data_type": type(parsed_data).__name__
+                }
+            )
+        except json.JSONDecodeError as e:
+            print(f"JSON 解析失败: {e}")
+            return []
+        except Exception as e:
+            print(f"导入 JSON 数据失败: {e}")
+            return []
+
+    async def import_csv(self, file_path: str, title: Optional[str] = None) -> List[str]:
+        """
+        导入 CSV 文件
+
+        Args:
+            file_path: CSV 文件路径
+            title: 文档标题
+
+        Returns:
+            添加的文档 ID 列表
+        """
+        import csv
+        import io
+
+        try:
+            rows = []
+            with open(file_path, 'r', encoding='utf-8') as csvfile:
+                reader = csv.reader(csvfile)
+                for row in reader:
+                    rows.append(', '.join(row))  # 将每行转换为逗号分隔的字符串
+
+            content = '\n'.join(rows)
+
+            return await self.kb.add_document(
+                content=content,
+                source="csv_import",
+                doc_type="tabular_data",
+                metadata={
+                    "title": title or file_path,
+                    "format": "csv",
+                    "row_count": len(rows),
+                    "file_path": file_path
+                }
+            )
+        except Exception as e:
+            print(f"导入 CSV 文件失败: {e}")
+            return []
