@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     
     # 应用基础配置
     app_name: str = "EgoZone"
-    debug: bool = True
+    debug: bool = False  # 生产环境应设为 False
     secret_key: str = "change-me-in-production"
     
     # Gemini / Vertex AI 配置

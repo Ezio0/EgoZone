@@ -211,7 +211,7 @@ function addMessage(content, role) {
     const messageDiv = document.createElement('div');
     messageDiv.className = `message ${role}`;
 
-    const avatar = role === 'user' ? '👤' : '🤖';
+    const avatar = role === 'user' ? '<img src="/static/images/logo.png" alt="User" width="32" height="32" style="width: 32px; height: 32px;">' : '<img src="/static/images/logo.png" alt="EgoZone" width="32" height="32" style="width: 32px; height: 32px;">';
 
     messageDiv.innerHTML = `
         <div class="message-avatar">${avatar}</div>
@@ -228,7 +228,7 @@ function addTypingIndicator() {
     div.className = 'message assistant';
     div.id = id;
     div.innerHTML = `
-        <div class="message-avatar">🤖</div>
+        <div class="message-avatar"><img src="/static/images/logo.png" alt="EgoZone" width="32" height="32" style="width: 32px; height: 32px;"></div>
         <div class="message-bubble">
             <div class="typing-indicator">
                 <span></span><span></span><span></span>
