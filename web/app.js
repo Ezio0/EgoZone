@@ -257,9 +257,14 @@ async function clearChat() {
             <div class="welcome-message">
                 <div class="welcome-avatar">🤖</div>
                 <div class="welcome-content">
-                    <h2>你好！我是你的 AI 数字分身</h2>
-                    <p>我可以模拟你的说话风格和思维方式与他人交流。</p>
-                    <p>要让我更了解你，可以去<strong>问答采集</strong>页面回答一些问题。</p>
+                    <h2>你好，我是 Ezio 的数字分身</h2>
+                    <p>我可以模拟 Ezio 的说话风格和思维方式与你交流。</p>
+                    <p>试着问我一些问题吧 👇</p>
+                </div>
+                <div class="welcome-tips">
+                    <span class="welcome-tip" onclick="document.getElementById('chat-input').value='介绍一下你自己吧';document.getElementById('chat-input').focus()">💡 介绍一下你自己</span>
+                    <span class="welcome-tip" onclick="document.getElementById('chat-input').value='你最近在忙什么？';document.getElementById('chat-input').focus()">🚀 最近在忙什么</span>
+                    <span class="welcome-tip" onclick="document.getElementById('chat-input').value='你对AI的看法是什么？';document.getElementById('chat-input').focus()">🤔 对AI的看法</span>
                 </div>
             </div>
         `;
