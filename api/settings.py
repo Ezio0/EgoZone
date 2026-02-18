@@ -2,7 +2,7 @@
 设置 API 路由
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
@@ -72,16 +72,31 @@ async def get_profile():
 
 
 @router.put("/profile")
-async def update_profile(settings: SettingsUpdate):
+async def update_profile(settings: SettingsUpdate, http_request: Request):
     """
     更新用户设置
     """
+    # 验证管理员令牌
+    # 获取管理员令牌
+    admin_token = http_request.headers.get("x-admin-token")
+    if not admin_token:
+        # 尝试从Authorization头获取
+        auth_header = http_request.headers.get("authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            admin_token = auth_header[len("Bearer "):]
+
+    # 验证管理员令牌
+    from api.auth import is_admin_token_valid
+
+    if not is_admin_token_valid(admin_token):
+        raise HTTPException(status_code=401, detail="需要有效的管理员令牌")
+
     manager = get_profile_manager()
-    
+
     # 过滤掉 None 值
     update_data = {k: v for k, v in settings.model_dump().items() if v is not None}
-    
+
     if update_data:
         await manager.update(**update_data)
-    
+
     return {"success": True, "message": "设置已保存"}

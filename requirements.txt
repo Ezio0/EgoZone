@@ -7,6 +7,8 @@ python-dotenv>=1.0.0
 
 # Google AI (Vertex AI)
 google-cloud-aiplatform>=1.47.0
+# Google AI Studio
+google-generativeai>=0.5.0
 
 # Google Cloud Storage
 google-cloud-storage>=2.14.0
@@ -34,6 +36,8 @@ requests>=2.31.0
 # Telegram Bot (optional)
 python-telegram-bot>=20.7
 
-# Voice (optional)
-# google-cloud-speech>=2.23.0
-# google-cloud-texttospeech>=2.14.0
+# Passlib for password hashing (optional but recommended)
+passlib[bcrypt]>=1.7.4
+
+# Password strength validation
+password-strength>=0.0.3

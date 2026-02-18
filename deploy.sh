@@ -5,14 +5,22 @@
 set -e
 
 # 配置变量
-PROJECT_ID="${GCP_PROJECT_ID:-your-project-id}"
-REGION="${GCP_REGION:-asia-east1}"
+PROJECT_ID="${GCP_PROJECT_ID:-egozone}"
+REGION="${GCP_REGION:-us-central1}"
 SERVICE_NAME="egozone"
 IMAGE_NAME="gcr.io/${PROJECT_ID}/${SERVICE_NAME}"
 
 echo "🚀 开始部署 EgoZone 到 GCP Cloud Run..."
 echo "📦 项目: ${PROJECT_ID}"
 echo "🌏 区域: ${REGION}"
+
+# 加载 .env 文件
+if [ -f .env ]; then
+    echo "📄 加载 .env 配置..."
+    set -a  # 自动导出变量
+    source .env
+    set +a
+fi
 
 # 检查 gcloud 是否已认证
 if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | head -n 1 > /dev/null 2>&1; then
