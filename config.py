@@ -18,27 +18,27 @@ class Settings(BaseSettings):
     # Gemini / Vertex AI 配置
     gemini_api_key: Optional[str] = None  # 使用服务账号时不需要
     gemini_model: str = "gemini-3-flash-preview"
-    gcp_project: str = "egozone"  # GCP 项目 ID
+    gcp_project: str  # GCP 项目 ID - 必须从环境变量设置
     gcp_location: str = "us-central1"  # Vertex AI 区域 (支持最新Gemini 3.0 Pro模型)
-    
+
     # 数据库
     database_url: str = "sqlite:///./egozone.db"
-    
+
     # Redis (可选)
     redis_url: Optional[str] = None
-    
+
     # Telegram (可选)
     telegram_bot_token: Optional[str] = None
-    
+
     # Google Cloud (语音服务，可选)
     google_cloud_project: Optional[str] = None
-    
-    # 管理员密码（用于访问问答采集、知识库、设置功能）
-    admin_password: str = "Wuya2bu2.egozone"  # 请在生产环境修改
-    
-    # 公共访问密码（用于访问对话功能，防止恶意攻击）
-    access_password: str = "123321abc0"  # 请在生产环境修改
-    
+
+    # 管理员密码（用于访问问答采集、知识库、设置功能）- 必须从环境变量设置
+    admin_password: str  # 必须从环境变量获取，无默认值
+
+    # 公共访问密码（用于访问对话功能，防止恶意攻击）- 必须从环境变量设置
+    access_password: str  # 必须从环境变量获取，无默认值
+
     # Google Cloud Storage（持久化存储）
     gcs_bucket: Optional[str] = "egozone-data"
     use_gcs: bool = True  # 生产环境设为 True

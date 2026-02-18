@@ -2,8 +2,8 @@
  * EgoZone - Web 应用 JavaScript
  */
 
-// ⚠️ 本地调试模式：设为 true 跳过所有密码验证
-const DEBUG_MODE = true;
+// ⚠️ 安全模式：调试模式已禁用，所有功能需要正常认证
+const DEBUG_MODE = false; // 生产环境必须保持false，禁止绕过认证
 
 // API 基础 URL（自动检测环境）
 const API_BASE = window.location.origin + '/api';
@@ -83,15 +83,46 @@ function debounce(func, wait) {
 
 async function apiRequest(endpoint, options = {}) {
     try {
+        // 添加访问令牌到请求头
+        const headers = {
+            'Content-Type': 'application/json',
+            ...options.headers
+        };
+
+        // 统一使用Authorization头，符合标准
+        if (state.accessToken) {
+            headers['Authorization'] = `Bearer ${state.accessToken}`;
+        }
+
+        if (state.adminToken) {
+            headers['Authorization'] = `Bearer ${state.adminToken}`;
+        }
+
         const response = await fetch(`${API_BASE}${endpoint}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
+            headers: headers,
             ...options
         });
 
         if (!response.ok) {
+            // 处理认证失败情况
+            if (response.status === 401) {
+                // 清除无效令牌
+                if (state.accessToken) {
+                    localStorage.removeItem('accessToken');
+                    state.accessToken = null;
+                    state.hasAccess = false;
+                }
+                if (state.adminToken) {
+                    localStorage.removeItem('adminToken');
+                    state.adminToken = null;
+                    state.isAdmin = false;
+                }
+
+                // 显示访问验证弹窗
+                if (endpoint.includes('/chat/') || endpoint.includes('/knowledge/')) {
+                    showAccessModal();
+                }
+            }
             throw new Error(`HTTP ${response.status}`);
         }
 
@@ -511,7 +542,7 @@ async function loadSettings() {
     }
 }
 
-async function saveSettings() {
+async function saveSettings(event) {
     const name = elements.settingName?.value || '';
     const education = elements.settingEducation?.value || '';
     const profession = elements.settingProfession?.value || '';
@@ -576,6 +607,12 @@ const adminElements = {
 };
 
 function initAdmin() {
+    // 检查关键元素是否存在
+    if (!adminElements.loginBtn || !adminElements.loginModal || !adminElements.closeModal) {
+        // 如果找不到管理员元素（可能被注释掉了），则跳过初始化
+        return;
+    }
+
     // 登录按钮
     adminElements.loginBtn.addEventListener('click', () => {
         if (state.isAdmin) {
@@ -624,10 +661,12 @@ async function submitLogin() {
         return;
     }
 
+    const trustDevice = document.getElementById('admin-trust-device')?.checked || false;
+
     try {
         const response = await apiRequest('/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ password })
+            body: JSON.stringify({ password, trust_device: trustDevice })
         });
 
         if (response.success) {
@@ -784,6 +823,28 @@ function initMobileMenu() {
 state.hasAccess = false;
 state.accessToken = localStorage.getItem('accessToken') || null;
 
+async function checkTrustedDevice() {
+    try {
+        const response = await fetch(`${API_BASE}/auth/check-device`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const data = await response.json();
+
+        if (data.trusted && data.token) {
+            state.accessToken = data.token;
+            state.hasAccess = true;
+            localStorage.setItem('accessToken', data.token);
+            hideAccessModal();
+            showToast(`可信设备自动登录成功：${data.device_name || ''}`, 'success');
+            return true;
+        }
+    } catch (error) {
+        console.log('可信设备检查失败:', error);
+    }
+    return false;
+}
+
 function initAccessCheck() {
     // 调试模式：直接跳过密码验证，设置为管理员
     if (DEBUG_MODE) {
@@ -799,12 +860,17 @@ function initAccessCheck() {
 
     if (!accessModal || !accessPassword || !accessSubmitBtn) return;
 
-    // 检查是否已有访问权限
-    if (state.accessToken) {
-        verifyAccessToken();
-    } else {
-        showAccessModal();
-    }
+    // 先检查是否为可信设备（自动免密码登录）
+    checkTrustedDevice().then(isTrusted => {
+        if (isTrusted) return; // 已通过可信设备自动登录
+
+        // 检查是否已有有效访问令牌
+        if (state.accessToken) {
+            verifyAccessToken();
+        } else {
+            showAccessModal();
+        }
+    });
 
     // 提交验证
     accessSubmitBtn.addEventListener('click', submitAccessPassword);
@@ -837,10 +903,12 @@ async function submitAccessPassword() {
         return;
     }
 
+    const trustDevice = document.getElementById('access-trust-device')?.checked || false;
+
     try {
         const response = await apiRequest('/auth/access-login', {
             method: 'POST',
-            body: JSON.stringify({ password })
+            body: JSON.stringify({ password, trust_device: trustDevice })
         });
 
         if (response.success) {

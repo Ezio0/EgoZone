@@ -2,7 +2,7 @@
 知识库 API 路由
 """
 
-from fastapi import APIRouter, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Request
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict
 import aiofiles
@@ -53,24 +53,42 @@ def get_knowledge_base():
 
 
 @router.post("/add")
-async def add_knowledge(request: AddKnowledgeRequest):
+async def add_knowledge(request: AddKnowledgeRequest, http_request: Request):
     """
     添加知识到知识库
-    
+
     - **content**: 知识内容
     - **title**: 标题（可选）
     - **source**: 来源
     - **doc_type**: 文档类型
     """
+    # 验证管理员令牌
+    from config import get_settings
+    settings = get_settings()
+
+    # 获取管理员令牌
+    admin_token = http_request.headers.get("x-admin-token")
+    if not admin_token:
+        # 尝试从Authorization头获取
+        auth_header = http_request.headers.get("authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            admin_token = auth_header[len("Bearer "):]
+
+    # 验证管理员令牌
+    from api.auth import is_admin_token_valid
+
+    if not is_admin_token_valid(admin_token):
+        raise HTTPException(status_code=401, detail="需要有效的管理员令牌")
+
     kb = get_knowledge_base()
-    
+
     doc_ids = await kb.add_document(
         content=request.content,
         source=request.source,
         doc_type=request.doc_type,
         metadata={"title": request.title} if request.title else None
     )
-    
+
     return {
         "status": "success",
         "message": f"添加了 {len(doc_ids)} 个文档块",
@@ -82,29 +100,48 @@ async def add_knowledge(request: AddKnowledgeRequest):
 async def upload_document(
     file: UploadFile = File(...),
     title: Optional[str] = Form(None),
-    doc_type: str = Form("text")
+    doc_type: str = Form("text"),
+    http_request: Request = None
 ):
     """
     上传文档文件
-    
+
     支持 .txt, .md 文件
     """
+    # 验证管理员令牌
+    from config import get_settings
+    settings = get_settings()
+
+    # 获取管理员令牌
+    admin_token = http_request.headers.get("x-admin-token")
+    if not admin_token:
+        # 尝试从Authorization头获取
+        auth_header = http_request.headers.get("authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            admin_token = auth_header[len("Bearer "):]
+
+    # 验证管理员令牌
+    from api.auth import is_admin_token_valid
+
+    if not is_admin_token_valid(admin_token):
+        raise HTTPException(status_code=401, detail="需要有效的管理员令牌")
+
     kb = get_knowledge_base()
-    
+
     # 检查文件类型
     allowed_extensions = {'.txt', '.md', '.markdown'}
     file_ext = '.' + file.filename.split('.')[-1].lower() if '.' in file.filename else ''
-    
+
     if file_ext not in allowed_extensions:
         raise HTTPException(
             status_code=400,
             detail=f"不支持的文件类型: {file_ext}，支持: {', '.join(allowed_extensions)}"
         )
-    
+
     # 读取文件内容
     content = await file.read()
     text_content = content.decode('utf-8')
-    
+
     # 添加到知识库
     doc_ids = await kb.add_document(
         content=text_content,
@@ -115,7 +152,7 @@ async def upload_document(
             "filename": file.filename
         }
     )
-    
+
     return {
         "status": "success",
         "message": f"上传成功，添加了 {len(doc_ids)} 个文档块",
@@ -175,16 +212,34 @@ async def list_knowledge(limit: int = 50, offset: int = 0):
 
 
 @router.delete("/{doc_id}")
-async def delete_knowledge(doc_id: str):
+async def delete_knowledge(doc_id: str, request: Request):
     """
     删除知识文档
-    
+
     - **doc_id**: 文档 ID
     """
+    # 验证管理员令牌
+    from config import get_settings
+    settings = get_settings()
+
+    # 获取管理员令牌
+    admin_token = request.headers.get("x-admin-token")
+    if not admin_token:
+        # 尝试从Authorization头获取
+        auth_header = request.headers.get("authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            admin_token = auth_header[len("Bearer "):]
+
+    # 验证管理员令牌
+    from api.auth import is_admin_token_valid
+
+    if not is_admin_token_valid(admin_token):
+        raise HTTPException(status_code=401, detail="需要有效的管理员令牌")
+
     kb = get_knowledge_base()
-    
+
     await kb.delete_document(doc_id)
-    
+
     return {
         "status": "success",
         "message": f"已删除文档 {doc_id}"

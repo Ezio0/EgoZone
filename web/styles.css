@@ -1356,6 +1356,24 @@ body {
     justify-content: flex-end;
 }
 
+.trust-device-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    user-select: none;
+}
+
+.trust-device-label input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent-primary, #7c5cfc);
+    cursor: pointer;
+}
+
 /* =============================================
    Mobile Menu Toggle
    ============================================= */

@@ -35,6 +35,34 @@ async def lifespan(app: FastAPI):
     # 初始化核心组件
     print("🚀 正在初始化 EgoZone...")
     
+    # 严格安全检查 - 发现问题时阻止启动
+    print("🔒 执行安全检查...")
+    from core.enhanced_security import enhanced_security_validation, print_security_report
+    is_secure, errors, warnings = enhanced_security_validation()
+    print_security_report(is_secure, errors, warnings)
+
+    if not is_secure:
+        print("\n❌ 发现严重安全问题，服务启动已阻止")
+        print("🔧 请修复上述问题后再启动服务")
+        raise RuntimeError("安全配置检查失败，服务启动已中止")
+    
+    # 清理过期令牌和限流数据
+    print("🧹 清理过期数据...")
+    from core.token_storage import get_token_storage
+    from core.rate_limiter import cleanup_rate_limit_data
+    
+    token_storage = get_token_storage()
+    cleaned_tokens = token_storage.cleanup_expired_tokens()
+    if cleaned_tokens > 0:
+        print(f"✅ 已清理 {cleaned_tokens} 个过期令牌")
+    
+    # 清理限流数据
+    try:
+        cleanup_rate_limit_data()
+        print("✅ 限流数据清理完成")
+    except Exception as e:
+        print(f"⚠️  限流数据清理失败: {e}")
+    
     # Gemini 客户端 (支持 Vertex AI 和 Google AI Studio API 两种模式)
     gemini_client = GeminiClient(
         project_id=settings.gcp_project,
