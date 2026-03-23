@@ -1,187 +1,187 @@
-# EgoZone 安全启动指南
+# EgoZone Secure Startup Guide
 
-## 🔒 重要安全提醒
+## 🔒 Important Security Notice
 
-由于实施了强化的安全机制，EgoZone现在**强制要求**使用强密码。使用默认密码将无法启动服务。
+Due to the implementation of enhanced security mechanisms, EgoZone now **requires** the use of strong passwords. The service cannot be started with default passwords.
 
-## 📋 启动前准备
+## 📋 Pre-Startup Preparation
 
-### 1. 检查当前安全状态
-运行以下命令检查安全配置：
+### 1. Check Current Security Status
+Run the following command to check security configuration:
 ```bash
-python3 -c "from core.security_config import SecurityConfig; result = SecurityConfig.validate_security_configuration(); print('安全状态:', '✅ 安全' if result['is_secure'] else '❌ 需要修复'); print('问题:', result['issues'])"
+python3 -c "from core.security_config import SecurityConfig; result = SecurityConfig.validate_security_configuration(); print('Security Status:', '✅ Secure' if result['is_secure'] else '❌ Needs Fix'); print('Issues:', result['issues'])"
 ```
 
-### 2. 设置强密码
+### 2. Set Strong Passwords
 
-#### 方法A：使用环境变量文件（推荐）
-1. 复制安全示例文件：
+#### Method A: Use Environment Variable File (Recommended)
+1. Copy the secure example file:
 ```bash
 cp .env.example.secure .env
 ```
 
-2. 编辑 `.env` 文件，修改密码为强密码：
+2. Edit the `.env` file and change passwords to strong ones:
 ```bash
-# 管理员密码（必须包含大小写字母、数字、特殊字符，12位以上）
+# Administrator password (must contain uppercase, lowercase letters, numbers, special characters, 12+ characters)
 ADMIN_PASSWORD=YourSecureAdminPass123!@#
 
-# 访问密码（必须包含大小写字母、数字、特殊字符，12位以上）  
+# Access password (must contain uppercase, lowercase letters, numbers, special characters, 12+ characters)
 ACCESS_PASSWORD=YourSecureAccessPass456!@#
 ```
 
-3. 确保密码满足要求：
-- ✅ 至少12个字符
-- ✅ 包含大写字母（A-Z）
-- ✅ 包含小写字母（a-z）
-- ✅ 包含数字（0-9）
-- ✅ 包含特殊字符（!@#$%^&*等）
-- ✅ 不包含常见单词或个人信息
+3. Ensure passwords meet requirements:
+   - ✅ At least 12 characters
+   - ✅ Contains uppercase letters (A-Z)
+   - ✅ Contains lowercase letters (a-z)
+   - ✅ Contains numbers (0-9)
+   - ✅ Contains special characters (!@#$%^&* etc.)
+   - ✅ Does not contain common words or personal information
 
-#### 方法B：生成强密码
-使用内置的密码生成器：
+#### Method B: Generate Strong Password
+Use the built-in password generator:
 ```python
-python3 -c "from core.password_validator import PasswordValidator; validator = PasswordValidator(); pwd = validator.generate_strong_password(16); print('生成的强密码:', pwd)"
+python3 -c "from core.password_validator import PasswordValidator; validator = PasswordValidator(); pwd = validator.generate_strong_password(16); print('Generated strong password:', pwd)"
 ```
 
-### 3. 验证密码强度
+### 3. Validate Password Strength
 ```bash
-python3 -c "from core.password_validator import PasswordValidator; validator = PasswordValidator(); is_valid, errors = validator.validate_password('YourPasswordHere'); print('有效:', is_valid); print('错误:', errors)"
+python3 -c "from core.password_validator import PasswordValidator; validator = PasswordValidator(); is_valid, errors = validator.validate_password('YourPasswordHere'); print('Valid:', is_valid); print('Errors:', errors)"
 ```
 
-## 🚀 启动应用
+## 🚀 Start the Application
 
-### 标准启动
+### Standard Startup
 ```bash
 python3 main.py
 ```
 
-### 后台启动（推荐）
+### Background Startup (Recommended)
 ```bash
 nohup python3 main.py > egozone.log 2>&1 &
 echo $! > egozone.pid
 ```
 
-### 使用启动脚本
+### Using Startup Script
 ```bash
 chmod +x start_service.sh
 ./start_service.sh
 ```
 
-## ✅ 启动成功验证
+## ✅ Verify Successful Startup
 
-### 检查服务状态
+### Check Service Status
 ```bash
-# 查看进程
+# View process
 ps aux | grep "python3 main.py"
 
-# 检查端口
+# Check port
 netstat -tlnp | grep 8000
 
-# 测试健康检查端点
+# Test health check endpoint
 curl http://localhost:8000/health
 ```
 
-### 验证安全功能
-1. **测试默认密码拒绝**：
+### Verify Security Features
+1. **Test Default Password Rejection**:
 ```bash
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"password": "Wuya2bu2.egozone"}'
-# 应该返回401 Unauthorized
+# Should return 401 Unauthorized
 ```
 
-2. **测试限流机制**：
+2. **Test Rate Limiting**:
 ```bash
-# 快速发送多个错误密码请求
+# Quickly send multiple wrong password requests
 for i in {1..10}; do
   curl -X POST http://localhost:8000/api/auth/login \
     -H "Content-Type: application/json" \
     -d '{"password": "wrongpassword"}'
 done
-# 应该触发429 Too Many Requests
+# Should trigger 429 Too Many Requests
 ```
 
-3. **测试令牌持久化**：
+3. **Test Token Persistence**:
 ```bash
-# 使用正确密码登录
+# Login with correct password
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{"password": "YourSecureAdminPass123!@#"}'
-# 应该返回有效的令牌
+# Should return a valid token
 ```
 
-## 🔧 故障排除
+## 🔧 Troubleshooting
 
-### 问题1：服务无法启动
-**症状**：启动后立即退出，无错误信息
-**解决**：检查安全日志，运行安全检查命令
+### Problem 1: Service Won't Start
+**Symptoms**: Exits immediately after startup, no error message
+**Solution**: Check security logs, run security check command
 ```bash
-python3 -c "from core.security_config import SecurityConfig; result = SecurityConfig.validate_security_configuration(); print('问题:', result['issues'])"
+python3 -c "from core.security_config import SecurityConfig; result = SecurityConfig.validate_security_configuration(); print('Issues:', result['issues'])"
 ```
 
-### 问题2：密码被拒绝
-**症状**：使用新密码仍无法登录
-**解决**：确保密码满足所有要求，检查大小写和特殊字符
+### Problem 2: Password Rejected
+**Symptoms**: Cannot login even with new password
+**Solution**: Ensure password meets all requirements, check case sensitivity and special characters
 
-### 问题3：限流误触发
-**症状**：正常用户被锁定
-**解决**：等待30分钟自动解锁，或清理限流数据
+### Problem 3: Rate Limiting False Trigger
+**Symptoms**: Normal users get locked out
+**Solution**: Wait 30 minutes for automatic unlock, or clear rate limit data
 ```bash
 python3 -c "from core.rate_limiter import cleanup_rate_limit_data; cleanup_rate_limit_data()"
 ```
 
-## 📊 安全监控
+## 📊 Security Monitoring
 
-### 查看安全日志
+### View Security Logs
 ```bash
-tail -f egozone.log | grep -E "(安全|Security|登录|Login)"
+tail -f egozone.log | grep -E "(Security|Login)"
 ```
 
-### 检查登录统计
+### Check Login Statistics
 ```bash
-python3 -c "from core.rate_limiter import get_login_stats; stats = get_login_stats('admin', '127.0.0.1'); print('登录统计:', stats)"
+python3 -c "from core.rate_limiter import get_login_stats; stats = get_login_stats('admin', '127.0.0.1'); print('Login stats:', stats)"
 ```
 
-### 验证安全配置
+### Verify Security Configuration
 ```bash
 python3 -c "
 from core.security_config import SecurityConfig
 result = SecurityConfig.validate_security_configuration()
-print('🔒 安全配置状态:', '✅ 安全' if result['is_secure'] else '❌ 需要修复')
+print('🔒 Security Configuration Status:', '✅ Secure' if result['is_secure'] else '❌ Needs Fix')
 if result['issues']:
-    print('问题:')
+    print('Issues:')
     for issue in result['issues']:
         print(f'  ❌ {issue}')
 if result['warnings']:
-    print('警告:')
+    print('Warnings:')
     for warning in result['warnings']:
         print(f'  ⚠️  {warning}')
 "
 ```
 
-## 🛡️ 安全最佳实践
+## 🛡️ Security Best Practices
 
-### 生产环境建议
-1. **使用HTTPS**：配置SSL/TLS证书
-2. **反向代理**：使用Nginx/Apache作为反向代理
-3. **防火墙**：配置适当的防火墙规则
-4. **定期更新**：保持系统和依赖库更新
-5. **监控告警**：设置安全事件监控
-6. **备份策略**：定期备份配置和数据
+### Production Environment Recommendations
+1. **Use HTTPS**: Configure SSL/TLS certificates
+2. **Reverse Proxy**: Use Nginx/Apache as reverse proxy
+3. **Firewall**: Configure appropriate firewall rules
+4. **Regular Updates**: Keep system and dependencies updated
+5. **Monitoring & Alerts**: Set up security event monitoring
+6. **Backup Strategy**: Regularly backup configuration and data
 
-### 密码管理
-1. **定期更换**：每3-6个月更换一次密码
-2. **不同系统**：为不同系统使用不同密码
-3. **密码管理器**：使用专业的密码管理工具
-4. **避免重用**：不要在多个系统重用密码
+### Password Management
+1. **Regular Rotation**: Change passwords every 3-6 months
+2. **Different Systems**: Use different passwords for different systems
+3. **Password Manager**: Use professional password management tools
+4. **Avoid Reuse**: Do not reuse passwords across multiple systems
 
-## 📞 支持
+## 📞 Support
 
-如遇到启动问题：
-1. 首先运行安全检查命令
-2. 查看应用日志获取详细信息
-3. 验证密码强度要求
-4. 检查端口是否被占用
-5. 参考故障排除部分
+If you encounter startup issues:
+1. First run the security check command
+2. Check application logs for detailed information
+3. Verify password strength requirements
+4. Check if port is already in use
+5. Refer to the troubleshooting section
 
-**重要提醒**：安全机制是为了保护您的系统，请务必使用强密码并妥善保管。
+**Important Reminder**: Security mechanisms are designed to protect your system. Please always use strong passwords and keep them secure.

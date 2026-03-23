@@ -1,93 +1,93 @@
-# EgoZone 信任设备管理指南
+# EgoZone Trusted Device Management Guide
 
-## 功能说明
+## Feature Overview
 
-为了在安全性与便利性之间取得平衡，EgoZone 实现了信任设备功能：
+To balance security and convenience, EgoZone implements a trusted device feature:
 
-1. **安全增强**：重新启用了密码验证功能，确保每次非信任设备访问都需要验证密码
-2. **便利性保持**：对信任设备（如家里的电脑、公司的电脑和手机）提供免密码登录
+1. **Enhanced Security**: Re-enabled password verification, ensuring every access from non-trusted devices requires password verification
+2. **Maintained Convenience**: Provides password-free login for trusted devices (such as home computer, work computer, and mobile phone)
 
-## 如何使用
+## How to Use
 
-### 1. 首次登录并信任设备
+### 1. First Login and Trust Device
 
-1. 在您信任的设备（如家里的电脑）上访问 EgoZone
-2. 使用正确的管理员密码或公共访问密码登录
-3. 在登录界面勾选"信任此设备"选项
-4. 系统会记录该设备的信息并将其加入信任列表
+1. Access EgoZone from your trusted device (such as home computer)
+2. Login with the correct administrator password or public access password
+3. Check the "Trust this device" option on the login screen
+4. The system will record the device information and add it to the trusted list
 
-### 2. 查看信任设备
+### 2. View Trusted Devices
 
-您可以随时通过 API 端点查看当前的信任设备列表：
+You can view the current trusted device list at any time via the API endpoint:
 ```
 GET /api/auth/trusted-devices
 ```
 
-### 3. 移除信任设备
+### 3. Remove Trusted Devices
 
-如果某个设备不再可信，您可以通过以下 API 端点移除它：
+If a device is no longer trusted, you can remove it via the following API endpoint:
 ```
 DELETE /api/auth/trusted-devices/{device_fingerprint}
 ```
 
-### 4. 命令行管理工具
+### 4. Command Line Management Tool
 
-我们还提供了命令行工具来管理信任设备：
+We also provide a command line tool to manage trusted devices:
 
-#### 初始化信任设备列表
+#### Initialize Trusted Device List
 ```bash
 python manage_trusted_devices.py init
 ```
 
-#### 列出所有信任设备
+#### List All Trusted Devices
 ```bash
 python manage_trusted_devices.py list
 ```
 
-#### 手动添加信任设备
+#### Manually Add Trusted Device
 ```bash
-python manage_trusted_devices.py add --fingerprint <设备指纹> --name "<设备名称>"
+python manage_trusted_devices.py add --fingerprint <device_fingerprint> --name "<device_name>"
 ```
 
-#### 移除信任设备
+#### Remove Trusted Device
 ```bash
-python manage_trusted_devices.py remove --fingerprint <设备指纹>
+python manage_trusted_devices.py remove --fingerprint <device_fingerprint>
 ```
 
-## 技术细节
+## Technical Details
 
-### 设备指纹生成
+### Device Fingerprint Generation
 
-系统通过以下信息生成唯一的设备指纹：
-- User-Agent 头部信息
-- IP 地址
-- 其他请求头信息
+The system generates unique device fingerprints using the following information:
+- User-Agent header
+- IP address
+- Other request header information
 
-### 数据存储
+### Data Storage
 
-信任设备信息存储在 `data/trusted_devices.json` 文件中，包含：
-- 设备指纹
-- 设备名称
-- 添加时间
-- 最后使用时间
-- User-Agent 信息
+Trusted device information is stored in the `data/trusted_devices.json` file, containing:
+- Device fingerprint
+- Device name
+- Added time
+- Last used time
+- User-Agent information
 
-## 安全提示
+## Security Tips
 
-1. 定期检查信任设备列表，移除不再使用的设备
-2. 在公共或共享设备上不要选择"信任此设备"
-3. 如果怀疑信任设备被入侵，请立即移除其信任状态
-4. 定期更换管理员和访问密码
+1. Regularly check the trusted device list and remove unused devices
+2. Do not select "Trust this device" on public or shared devices
+3. If you suspect a trusted device has been compromised, immediately remove its trusted status
+4. Regularly change administrator and access passwords
 
-## API 变更
+## API Changes
 
-以下 API 端点已更新以支持信任设备功能：
+The following API endpoints have been updated to support trusted device functionality:
 
-### 登录端点
-- `POST /api/auth/login` - 支持 `trust_device` 参数
-- `POST /api/auth/access-login` - 支持 `trust_device` 参数
+### Login Endpoints
+- `POST /api/auth/login` - Supports `trust_device` parameter
+- `POST /api/auth/access-login` - Supports `trust_device` parameter
 
-### 设备管理端点
-- `GET /api/auth/trusted-devices` - 获取信任设备列表
-- `DELETE /api/auth/trusted-devices/{device_fingerprint}` - 移除信任设备
-- `POST /api/auth/trust-device` - 手动添加信任设备
+### Device Management Endpoints
+- `GET /api/auth/trusted-devices` - Get trusted device list
+- `DELETE /api/auth/trusted-devices/{device_fingerprint}` - Remove trusted device
+- `POST /api/auth/trust-device` - Manually add trusted device
