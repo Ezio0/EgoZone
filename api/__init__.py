@@ -1,5 +1,5 @@
 """
-EgoZone API 路由
+EgoZone API Routes
 """
 
 from . import chat, knowledge, interview, auth, settings
