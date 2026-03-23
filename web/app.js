@@ -1,14 +1,14 @@
 /**
- * EgoZone - Web 应用 JavaScript
+ * EgoZone - Web Application JavaScript
  */
 
-// ⚠️ 安全模式：调试模式已禁用，所有功能需要正常认证
-const DEBUG_MODE = false; // 生产环境必须保持false，禁止绕过认证
+// Security mode: debug mode disabled, all features require proper authentication
+const DEBUG_MODE = false; // Must remain false in production, authentication bypass prohibited
 
-// API 基础 URL（自动检测环境）
+// API base URL (auto-detect environment)
 const API_BASE = window.location.origin + '/api';
 
-// 全局状态
+// Global state
 const state = {
     currentPage: 'chat',
     currentQuestion: null,
@@ -16,19 +16,19 @@ const state = {
     isLoading: false
 };
 
-// DOM 元素
+// DOM elements
 const elements = {
-    // 导航
+    // Navigation
     navItems: document.querySelectorAll('.nav-item'),
     pages: document.querySelectorAll('.page'),
 
-    // 对话
+    // Chat
     chatMessages: document.getElementById('chat-messages'),
     chatInput: document.getElementById('chat-input'),
     sendBtn: document.getElementById('send-btn'),
     clearChat: document.getElementById('clear-chat'),
 
-    // 问答
+    // Q&A
     questionCategory: document.getElementById('question-category'),
     questionText: document.getElementById('question-text'),
     answerInput: document.getElementById('answer-input'),
@@ -40,14 +40,14 @@ const elements = {
     totalCount: document.getElementById('total-count'),
     categoriesContainer: document.getElementById('categories-container'),
 
-    // 知识库
+    // Knowledge Base
     knowledgeTitle: document.getElementById('knowledge-title'),
     knowledgeContent: document.getElementById('knowledge-content'),
     addKnowledgeBtn: document.getElementById('add-knowledge-btn'),
     knowledgeCount: document.getElementById('knowledge-count'),
     knowledgeListContainer: document.getElementById('knowledge-list-container'),
 
-    // 设置
+    // Settings
     settingName: document.getElementById('setting-name'),
     settingEducation: document.getElementById('setting-education'),
     settingProfession: document.getElementById('setting-profession'),
@@ -59,7 +59,7 @@ const elements = {
     toast: document.getElementById('toast')
 };
 
-// ========== 工具函数 ==========
+// ========== Utility Functions ==========
 
 function showToast(message, type = 'success') {
     elements.toast.textContent = message;
@@ -83,13 +83,13 @@ function debounce(func, wait) {
 
 async function apiRequest(endpoint, options = {}) {
     try {
-        // 添加访问令牌到请求头
+        // Add access token to request headers
         const headers = {
             'Content-Type': 'application/json',
             ...options.headers
         };
 
-        // 统一使用Authorization头，符合标准
+        // Use Authorization header uniformly, following standards
         if (state.accessToken) {
             headers['Authorization'] = `Bearer ${state.accessToken}`;
         }
@@ -104,9 +104,9 @@ async function apiRequest(endpoint, options = {}) {
         });
 
         if (!response.ok) {
-            // 处理认证失败情况
+            // Handle authentication failure
             if (response.status === 401) {
-                // 清除无效令牌
+                // Clear invalid tokens
                 if (state.accessToken) {
                     localStorage.removeItem('accessToken');
                     state.accessToken = null;
@@ -118,7 +118,7 @@ async function apiRequest(endpoint, options = {}) {
                     state.isAdmin = false;
                 }
 
-                // 显示访问验证弹窗
+                // Show access verification modal
                 if (endpoint.includes('/chat/') || endpoint.includes('/knowledge/')) {
                     showAccessModal();
                 }
@@ -128,12 +128,12 @@ async function apiRequest(endpoint, options = {}) {
 
         return await response.json();
     } catch (error) {
-        console.error('API 请求失败:', error);
+        console.error('API request failed:', error);
         throw error;
     }
 }
 
-// ========== 导航 ==========
+// ========== Navigation ==========
 
 function initNavigation() {
     elements.navItems.forEach(item => {
@@ -146,19 +146,19 @@ function initNavigation() {
 }
 
 function switchPage(pageName) {
-    // 更新导航
+    // Update navigation
     elements.navItems.forEach(item => {
         item.classList.toggle('active', item.dataset.page === pageName);
     });
 
-    // 更新页面
+    // Update pages
     elements.pages.forEach(page => {
         page.classList.toggle('active', page.id === `${pageName}-page`);
     });
 
     state.currentPage = pageName;
 
-    // 加载页面数据
+    // Load page data
     switch (pageName) {
         case 'interview':
             loadInterviewData();
@@ -172,13 +172,13 @@ function switchPage(pageName) {
     }
 }
 
-// ========== 对话功能 ==========
+// ========== Chat Functions ==========
 
 function initChat() {
-    // 发送按钮
+    // Send button
     elements.sendBtn.addEventListener('click', sendMessage);
 
-    // 输入框
+    // Input box
     elements.chatInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -186,13 +186,13 @@ function initChat() {
         }
     });
 
-    // 自动调整高度
+    // Auto-adjust height
     elements.chatInput.addEventListener('input', () => {
         elements.chatInput.style.height = 'auto';
         elements.chatInput.style.height = Math.min(elements.chatInput.scrollHeight, 200) + 'px';
     });
 
-    // 清空对话
+    // Clear chat
     elements.clearChat.addEventListener('click', clearChat);
 }
 
@@ -203,16 +203,16 @@ async function sendMessage() {
     state.isLoading = true;
     elements.sendBtn.disabled = true;
 
-    // 添加用户消息
+    // Add user message
     addMessage(message, 'user');
     elements.chatInput.value = '';
     elements.chatInput.style.height = 'auto';
 
-    // 移除欢迎消息
+    // Remove welcome message
     const welcome = elements.chatMessages.querySelector('.welcome-message');
     if (welcome) welcome.remove();
 
-    // 添加加载指示器
+    // Add loading indicator
     const loadingId = addTypingIndicator();
 
     try {
@@ -230,8 +230,8 @@ async function sendMessage() {
 
     } catch (error) {
         removeTypingIndicator(loadingId);
-        addMessage('抱歉，出现了一些问题，请稍后再试。', 'assistant');
-        showToast('发送失败，请检查后端服务是否启动', 'error');
+        addMessage('Sorry, something went wrong. Please try again later.', 'assistant');
+        showToast('Failed to send. Please check if backend service is running', 'error');
     }
 
     state.isLoading = false;
@@ -288,20 +288,20 @@ async function clearChat() {
             <div class="welcome-message">
                 <div class="welcome-avatar">🤖</div>
                 <div class="welcome-content">
-                    <h2>你好，我是 Ezio 的数字分身</h2>
-                    <p>我可以模拟 Ezio 的说话风格和思维方式与你交流。</p>
-                    <p>试着问我一些问题吧 👇</p>
+                    <h2>Hello, I'm Ezio's Digital Twin</h2>
+                    <p>I can simulate Ezio's speaking style and thinking patterns to communicate with you.</p>
+                    <p>Feel free to ask me questions 👇</p>
                 </div>
                 <div class="welcome-tips">
-                    <span class="welcome-tip" onclick="document.getElementById('chat-input').value='介绍一下你自己吧';document.getElementById('chat-input').focus()">💡 介绍一下你自己</span>
-                    <span class="welcome-tip" onclick="document.getElementById('chat-input').value='你最近在忙什么？';document.getElementById('chat-input').focus()">🚀 最近在忙什么</span>
-                    <span class="welcome-tip" onclick="document.getElementById('chat-input').value='你对AI的看法是什么？';document.getElementById('chat-input').focus()">🤔 对AI的看法</span>
+                    <span class="welcome-tip" onclick="document.getElementById('chat-input').value='Introduce yourself';document.getElementById('chat-input').focus()">💡 Introduce yourself</span>
+                    <span class="welcome-tip" onclick="document.getElementById('chat-input').value='What have you been up to lately?';document.getElementById('chat-input').focus()">🚀 What have you been up to</span>
+                    <span class="welcome-tip" onclick="document.getElementById('chat-input').value='What are your thoughts on AI?';document.getElementById('chat-input').focus()">🤔 Thoughts on AI</span>
                 </div>
             </div>
         `;
-        showToast('对话已清空');
+        showToast('Chat cleared');
     } catch (error) {
-        showToast('清空失败', 'error');
+        showToast('Failed to clear', 'error');
     }
 }
 
@@ -311,7 +311,7 @@ function escapeHtml(text) {
     return div.innerHTML.replace(/\n/g, '<br>');
 }
 
-// ========== 问答采集 ==========
+// ========== Q&A Collection ==========
 
 function initInterview() {
     elements.skipBtn.addEventListener('click', loadNextQuestion);
@@ -320,20 +320,20 @@ function initInterview() {
 
 async function loadInterviewData() {
     try {
-        // 加载进度
+        // Load progress
         const progress = await apiRequest('/interview/progress');
         updateProgress(progress);
 
-        // 加载类别
+        // Load categories
         const categories = await apiRequest('/interview/categories');
         renderCategories(categories);
 
-        // 加载下一个问题
+        // Load next question
         await loadNextQuestion();
 
     } catch (error) {
-        console.error('加载问答数据失败:', error);
-        showToast('加载失败，请检查后端服务', 'error');
+        console.error('Failed to load Q&A data:', error);
+        showToast('Failed to load. Please check backend service', 'error');
     }
 }
 
@@ -347,14 +347,14 @@ async function loadNextQuestion() {
         elements.answerInput.value = '';
 
     } catch (error) {
-        elements.questionText.textContent = '无法加载问题';
+        elements.questionText.textContent = 'Unable to load question';
     }
 }
 
 async function submitAnswer() {
     const answer = elements.answerInput.value.trim();
     if (!answer) {
-        showToast('请输入回答', 'error');
+        showToast('Please enter an answer', 'error');
         return;
     }
 
@@ -371,17 +371,17 @@ async function submitAnswer() {
             })
         });
 
-        showToast('回答已保存！');
+        showToast('Answer saved!');
 
-        // 更新进度
+        // Update progress
         const progress = await apiRequest('/interview/progress');
         updateProgress(progress);
 
-        // 加载下一题
+        // Load next question
         await loadNextQuestion();
 
     } catch (error) {
-        showToast('保存失败', 'error');
+        showToast('Failed to save', 'error');
     }
 }
 
@@ -397,7 +397,7 @@ function renderCategories(categories) {
     elements.categoriesContainer.innerHTML = categories.map(cat => `
         <div class="category-card" onclick="selectCategory('${cat.id}')">
             <h4>${cat.name}</h4>
-            <p>已回答 ${cat.answered_count} / ${cat.question_count}</p>
+            <p>Answered ${cat.answered_count} / ${cat.question_count}</p>
         </div>
     `).join('');
 }
@@ -406,18 +406,18 @@ async function selectCategory(categoryId) {
     try {
         const questions = await apiRequest(`/interview/questions/${categoryId}`);
         if (questions.length > 0) {
-            const unanswered = questions[0]; // 简化处理
+            const unanswered = questions[0]; // Simplified handling
             state.currentQuestion = unanswered;
             elements.questionCategory.textContent = unanswered.category_name;
             elements.questionText.textContent = unanswered.question;
             elements.answerInput.value = '';
         }
     } catch (error) {
-        showToast('加载问题失败', 'error');
+        showToast('Failed to load questions', 'error');
     }
 }
 
-// ========== 知识库 ==========
+// ========== Knowledge Base ==========
 
 function initKnowledge() {
     elements.addKnowledgeBtn.addEventListener('click', addKnowledge);
@@ -425,16 +425,16 @@ function initKnowledge() {
 
 async function loadKnowledgeData() {
     try {
-        // 加载统计
+        // Load statistics
         const stats = await apiRequest('/knowledge/stats');
         elements.knowledgeCount.textContent = stats.count || 0;
 
-        // 加载列表
+        // Load list
         const list = await apiRequest('/knowledge/list?limit=20');
         renderKnowledgeList(list.documents || []);
 
     } catch (error) {
-        console.error('加载知识库失败:', error);
+        console.error('Failed to load knowledge base:', error);
     }
 }
 
@@ -443,7 +443,7 @@ async function addKnowledge() {
     const content = elements.knowledgeContent.value.trim();
 
     if (!content) {
-        showToast('请输入知识内容', 'error');
+        showToast('Please enter knowledge content', 'error');
         return;
     }
 
@@ -458,15 +458,15 @@ async function addKnowledge() {
             })
         });
 
-        showToast('知识已添加！');
+        showToast('Knowledge added!');
         elements.knowledgeTitle.value = '';
         elements.knowledgeContent.value = '';
 
-        // 刷新列表
+        // Refresh list
         await loadKnowledgeData();
 
     } catch (error) {
-        showToast('添加失败', 'error');
+        showToast('Failed to add', 'error');
     }
 }
 
@@ -475,7 +475,7 @@ function renderKnowledgeList(documents) {
         elements.knowledgeListContainer.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon">📝</div>
-                <p>还没有添加任何知识</p>
+                <p>No knowledge added yet</p>
             </div>
         `;
         return;
@@ -483,29 +483,29 @@ function renderKnowledgeList(documents) {
 
     elements.knowledgeListContainer.innerHTML = documents.map(doc => `
         <div class="knowledge-item">
-            <div class="knowledge-item-title">${doc.metadata?.title || '无标题'}</div>
+            <div class="knowledge-item-title">${doc.metadata?.title || 'Untitled'}</div>
             <div class="knowledge-item-content">${escapeHtml(doc.content.slice(0, 200))}...</div>
-            <div class="knowledge-item-meta">来源: ${doc.metadata?.source || 'manual'}</div>
+            <div class="knowledge-item-meta">Source: ${doc.metadata?.source || 'manual'}</div>
         </div>
     `).join('');
 }
 
-// ========== 设置 ==========
+// ========== Settings ==========
 
 function initSettings() {
     elements.saveSettingsBtn.addEventListener('click', saveSettings);
 
-    // 自动保存逻辑
+    // Auto-save logic
     const debouncedSave = debounce(saveSettings, 1000);
 
-    // 为所有设置项添加监听器
+    // Add listeners to all settings fields
     if (elements.settingName) elements.settingName.addEventListener('input', debouncedSave);
     if (elements.settingEducation) elements.settingEducation.addEventListener('input', debouncedSave);
     if (elements.settingProfession) elements.settingProfession.addEventListener('input', debouncedSave);
     if (elements.settingTone) elements.settingTone.addEventListener('change', debouncedSave);
     if (elements.settingEmoji) elements.settingEmoji.addEventListener('change', debouncedSave);
 
-    // 页面加载时获取设置
+    // Load settings on page load
     loadSettings();
 }
 
@@ -513,7 +513,7 @@ async function loadSettings() {
     try {
         const response = await apiRequest('/settings/profile');
         if (response) {
-            // 填充表单
+            // Fill form
             if (elements.settingName) {
                 elements.settingName.value = response.name || '';
             }
@@ -524,20 +524,20 @@ async function loadSettings() {
                 elements.settingProfession.value = response.profession || '';
             }
             if (elements.settingTone) {
-                elements.settingTone.value = response.tone_of_voice || '温和';
+                elements.settingTone.value = response.tone_of_voice || 'gentle';
             }
             if (elements.settingEmoji) {
                 elements.settingEmoji.value = response.emoji_usage || 'moderate';
             }
         }
     } catch (error) {
-        console.log('加载设置失败，使用默认值');
-        // 设置默认值
+        console.log('Failed to load settings, using defaults');
+        // Set default values
         if (elements.settingEducation) {
-            elements.settingEducation.value = '计算机专业本科';
+            elements.settingEducation.value = 'BS in Computer Science';
         }
         if (elements.settingProfession) {
-            elements.settingProfession.value = '互联网产品经理';
+            elements.settingProfession.value = 'Product Manager';
         }
     }
 }
@@ -546,17 +546,17 @@ async function saveSettings(event) {
     const name = elements.settingName?.value || '';
     const education = elements.settingEducation?.value || '';
     const profession = elements.settingProfession?.value || '';
-    const tone = elements.settingTone?.value || '温和';
+    const tone = elements.settingTone?.value || 'gentle';
     const emoji = elements.settingEmoji?.value || 'moderate';
 
-    // 显示正在保存状态（可选，如果是自动保存不要太打扰）
+    // Show saving status (optional, less intrusive for auto-save)
     const isAutoSave = (event && event.type !== 'click');
     if (!isAutoSave) {
-        elements.saveSettingsBtn.textContent = '保存中...';
+        elements.saveSettingsBtn.textContent = 'Saving...';
         elements.saveSettingsBtn.disabled = true;
     } else {
-        // 可以在角落显示一个小提示
-        showToast('正在保存...', 'info');
+        // Can show a small hint in the corner
+        showToast('Saving...', 'info');
     }
 
     try {
@@ -573,16 +573,16 @@ async function saveSettings(event) {
 
         if (response.success) {
             if (!isAutoSave) {
-                showToast('设置已保存！');
+                showToast('Settings saved!');
             }
         } else {
-            showToast('保存失败', 'error');
+            showToast('Failed to save', 'error');
         }
     } catch (error) {
-        showToast('保存失败: ' + error.message, 'error');
+        showToast('Failed to save: ' + error.message, 'error');
     } finally {
         if (!isAutoSave) {
-            elements.saveSettingsBtn.textContent = '保存设置';
+            elements.saveSettingsBtn.textContent = 'Save Settings';
             elements.saveSettingsBtn.disabled = false;
         }
     }
@@ -590,13 +590,13 @@ async function saveSettings(event) {
 
 
 
-// ========== 管理员认证 ==========
+// ========== Admin Authentication ==========
 
-// 状态
+// State
 state.isAdmin = false;
 state.adminToken = localStorage.getItem('adminToken') || null;
 
-// DOM 元素（管理员相关）
+// DOM elements (admin related)
 const adminElements = {
     loginBtn: document.getElementById('admin-login-btn'),
     loginModal: document.getElementById('login-modal'),
@@ -607,13 +607,13 @@ const adminElements = {
 };
 
 function initAdmin() {
-    // 检查关键元素是否存在
+    // Check if key elements exist
     if (!adminElements.loginBtn || !adminElements.loginModal || !adminElements.closeModal) {
-        // 如果找不到管理员元素（可能被注释掉了），则跳过初始化
+        // If admin elements not found (possibly commented out), skip initialization
         return;
     }
 
-    // 登录按钮
+    // Login button
     adminElements.loginBtn.addEventListener('click', () => {
         if (state.isAdmin) {
             logout();
@@ -622,7 +622,7 @@ function initAdmin() {
         }
     });
 
-    // 关闭弹窗
+    // Close modal
     adminElements.closeModal.addEventListener('click', hideLoginModal);
     adminElements.loginModal.addEventListener('click', (e) => {
         if (e.target === adminElements.loginModal) {
@@ -630,7 +630,7 @@ function initAdmin() {
         }
     });
 
-    // 提交登录
+    // Submit login
     adminElements.loginSubmitBtn.addEventListener('click', submitLogin);
     adminElements.passwordInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -638,7 +638,7 @@ function initAdmin() {
         }
     });
 
-    // 检查现有 token
+    // Check existing token
     if (state.adminToken) {
         verifyToken();
     }
@@ -657,7 +657,7 @@ function hideLoginModal() {
 async function submitLogin() {
     const password = adminElements.passwordInput.value;
     if (!password) {
-        showToast('请输入密码', 'error');
+        showToast('Please enter password', 'error');
         return;
     }
 
@@ -675,12 +675,12 @@ async function submitLogin() {
             localStorage.setItem('adminToken', response.token);
             updateAdminUI();
             hideLoginModal();
-            showToast('登录成功！管理功能已解锁');
+            showToast('Login successful! Admin features unlocked');
         } else {
-            showToast(response.message || '密码错误', 'error');
+            showToast(response.message || 'Incorrect password', 'error');
         }
     } catch (error) {
-        showToast('登录失败', 'error');
+        showToast('Login failed', 'error');
     }
 }
 
@@ -695,13 +695,13 @@ async function verifyToken() {
             state.isAdmin = true;
             updateAdminUI();
         } else {
-            // Token 无效，清除
+            // Token invalid, clear it
             localStorage.removeItem('adminToken');
             state.adminToken = null;
             state.isAdmin = false;
         }
     } catch (error) {
-        // 验证失败，保持未登录状态
+        // Verification failed, remain logged out
         state.isAdmin = false;
     }
 }
@@ -715,7 +715,7 @@ async function logout() {
             });
         }
     } catch (error) {
-        // 忽略登出错误
+        // Ignore logout errors
     }
 
     localStorage.removeItem('adminToken');
@@ -723,20 +723,20 @@ async function logout() {
     state.isAdmin = false;
     updateAdminUI();
     switchPage('chat');
-    showToast('已退出管理员模式');
+    showToast('Logged out of admin mode');
 }
 
 function updateAdminUI() {
-    // 更新按钮状态
+    // Update button state
     if (state.isAdmin) {
-        adminElements.loginBtn.textContent = '🔓 退出管理';
+        adminElements.loginBtn.textContent = '🔓 Logout Admin';
         adminElements.loginBtn.classList.add('logged-in');
     } else {
-        adminElements.loginBtn.textContent = '🔐 管理员';
+        adminElements.loginBtn.textContent = '🔐 Admin';
         adminElements.loginBtn.classList.remove('logged-in');
     }
 
-    // 更新菜单项
+    // Update menu items
     adminElements.adminOnlyItems.forEach(item => {
         if (state.isAdmin) {
             item.classList.add('unlocked');
@@ -746,30 +746,30 @@ function updateAdminUI() {
     });
 }
 
-// 修改导航函数以检查权限
+// Modify navigation function to check permissions
 const originalSwitchPage = switchPage;
 function switchPage(pageName) {
-    // 检查是否需要管理员权限（调试模式跳过）
+    // Check if admin permission required (skip in debug mode)
     const adminPages = ['interview', 'knowledge', 'settings'];
     if (!DEBUG_MODE && adminPages.includes(pageName) && !state.isAdmin) {
         showLoginModal();
         return;
     }
 
-    // 调用原始函数
-    // 更新导航
+    // Call original function
+    // Update navigation
     elements.navItems.forEach(item => {
         item.classList.toggle('active', item.dataset.page === pageName);
     });
 
-    // 更新页面
+    // Update pages
     elements.pages.forEach(page => {
         page.classList.toggle('active', page.id === `${pageName}-page`);
     });
 
     state.currentPage = pageName;
 
-    // 加载页面数据
+    // Load page data
     switch (pageName) {
         case 'interview':
             loadInterviewData();
@@ -783,7 +783,7 @@ function switchPage(pageName) {
     }
 }
 
-// ========== 移动端菜单 ==========
+// ========== Mobile Menu ==========
 
 function initMobileMenu() {
     const menuToggle = document.getElementById('mobile-menu-toggle');
@@ -792,21 +792,21 @@ function initMobileMenu() {
 
     if (!menuToggle || !sidebar || !overlay) return;
 
-    // 点击菜单按钮
+    // Click menu button
     menuToggle.addEventListener('click', () => {
         sidebar.classList.toggle('open');
         overlay.classList.toggle('show');
         menuToggle.textContent = sidebar.classList.contains('open') ? '✕' : '☰';
     });
 
-    // 点击遮罩层关闭菜单
+    // Click overlay to close menu
     overlay.addEventListener('click', () => {
         sidebar.classList.remove('open');
         overlay.classList.remove('show');
         menuToggle.textContent = '☰';
     });
 
-    // 点击导航项后关闭菜单（移动端）
+    // Close menu after clicking nav item (mobile)
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', () => {
             if (window.innerWidth <= 768) {
@@ -818,7 +818,7 @@ function initMobileMenu() {
     });
 }
 
-// ========== 公共访问验证 ==========
+// ========== Public Access Verification ==========
 
 state.hasAccess = false;
 state.accessToken = localStorage.getItem('accessToken') || null;
@@ -836,17 +836,17 @@ async function checkTrustedDevice() {
             state.hasAccess = true;
             localStorage.setItem('accessToken', data.token);
             hideAccessModal();
-            showToast(`可信设备自动登录成功：${data.device_name || ''}`, 'success');
+            showToast(`Trusted device auto-login successful: ${data.device_name || ''}`, 'success');
             return true;
         }
     } catch (error) {
-        console.log('可信设备检查失败:', error);
+        console.log('Trusted device check failed:', error);
     }
     return false;
 }
 
 function initAccessCheck() {
-    // 调试模式：直接跳过密码验证，设置为管理员
+    // Debug mode: skip password verification, set as admin
     if (DEBUG_MODE) {
         state.hasAccess = true;
         state.isAdmin = true;
@@ -860,11 +860,11 @@ function initAccessCheck() {
 
     if (!accessModal || !accessPassword || !accessSubmitBtn) return;
 
-    // 先检查是否为可信设备（自动免密码登录）
+    // First check if trusted device (auto passwordless login)
     checkTrustedDevice().then(isTrusted => {
-        if (isTrusted) return; // 已通过可信设备自动登录
+        if (isTrusted) return; // Already logged in via trusted device
 
-        // 检查是否已有有效访问令牌
+        // Check if valid access token exists
         if (state.accessToken) {
             verifyAccessToken();
         } else {
@@ -872,7 +872,7 @@ function initAccessCheck() {
         }
     });
 
-    // 提交验证
+    // Submit verification
     accessSubmitBtn.addEventListener('click', submitAccessPassword);
     accessPassword.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
@@ -899,7 +899,7 @@ function hideAccessModal() {
 async function submitAccessPassword() {
     const password = document.getElementById('access-password').value;
     if (!password) {
-        showToast('请输入访问密码', 'error');
+        showToast('Please enter access password', 'error');
         return;
     }
 
@@ -916,12 +916,12 @@ async function submitAccessPassword() {
             state.hasAccess = true;
             localStorage.setItem('accessToken', response.token);
             hideAccessModal();
-            showToast('验证成功，欢迎使用！');
+            showToast('Verification successful, welcome!');
         } else {
-            showToast(response.message || '密码错误', 'error');
+            showToast(response.message || 'Incorrect password', 'error');
         }
     } catch (error) {
-        showToast('验证失败', 'error');
+        showToast('Verification failed', 'error');
     }
 }
 
@@ -942,12 +942,12 @@ async function verifyAccessToken() {
             showAccessModal();
         }
     } catch (error) {
-        // 验证失败，显示弹窗
+        // Verification failed, show modal
         showAccessModal();
     }
 }
 
-// ========== 初始化 ==========
+// ========== Initialization ==========
 
 function init() {
     initNavigation();
@@ -959,11 +959,11 @@ function init() {
     initMobileMenu();
     initAccessCheck();
 
-    console.log('🚀 EgoZone Web 应用已启动');
+    console.log('🚀 EgoZone Web Application started');
 }
 
-// 页面加载完成后初始化
+// Initialize after page load
 document.addEventListener('DOMContentLoaded', init);
 
-// 暴露全局函数
+// Expose global functions
 window.selectCategory = selectCategory;
