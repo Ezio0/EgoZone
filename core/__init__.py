@@ -1,5 +1,5 @@
 """
-EgoZone 核心模块
+EgoZone Core Module
 """
 
 from .gemini_client import GeminiClient
@@ -18,5 +18,5 @@ __all__ = [
     "UserProfileManager",
     "ConversationMemory",
     "ConversationManager",
-    "Message"
+    "Message",
 ]
