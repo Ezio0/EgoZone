@@ -51,7 +51,7 @@ gcloud run deploy ${SERVICE_NAME} \
     --cpu 1 \
     --min-instances 0 \
     --max-instances 10 \
-    --set-env-vars "GEMINI_API_KEY=${GEMINI_API_KEY}"
+    --set-env-vars "GEMINI_API_KEY=${GEMINI_API_KEY},GCP_PROJECT=${GCP_PROJECT},GCP_LOCATION=${GCP_LOCATION},ADMIN_PASSWORD=${ADMIN_PASSWORD},ACCESS_PASSWORD=${ACCESS_PASSWORD},SECRET_KEY=${SECRET_KEY},APP_NAME=${APP_NAME},GEMINI_MODEL=${GEMINI_MODEL}"
 
 # 获取服务 URL
 SERVICE_URL=$(gcloud run services describe ${SERVICE_NAME} --region=${REGION} --format='value(status.url)')
