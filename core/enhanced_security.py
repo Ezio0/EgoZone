@@ -1,6 +1,6 @@
 """
-增强的密码安全验证模块
-用于更严格的安全检查
+Enhanced Password Security Validation Module
+For stricter security checks
 """
 
 import re
@@ -10,114 +10,151 @@ from config import get_settings
 
 def enhanced_security_validation() -> Tuple[bool, List[str], List[str]]:
     """
-    增强的安全验证
-    返回: (是否通过, 错误列表, 警告列表)
+    Enhanced security validation
+    Returns: (passed, error list, warning list)
     """
     settings = get_settings()
     errors = []
     warnings = []
 
-    # 检查必要的安全配置是否存在
+    # Check if required security configurations exist
     if not settings.admin_password or settings.admin_password.strip() == "":
-        errors.append("❌ 管理员密码不能为空")
+        errors.append("❌ Admin password cannot be empty")
 
     if not settings.access_password or settings.access_password.strip() == "":
-        errors.append("❌ 访问密码不能为空")
+        errors.append("❌ Access password cannot be empty")
 
     if not settings.secret_key or settings.secret_key == "change-me-in-production":
-        errors.append("❌ 必须修改默认的SECRET_KEY")
+        errors.append("❌ Must change default SECRET_KEY")
 
-    if not hasattr(settings, 'gcp_project') or not settings.gcp_project or settings.gcp_project == "egozone":
-        errors.append("❌ 必须设置有效的GCP_PROJECT")
+    if (
+        not hasattr(settings, "gcp_project")
+        or not settings.gcp_project
+        or settings.gcp_project == "egozone"
+    ):
+        errors.append("❌ Must set valid GCP_PROJECT")
 
-    # 更严格密码强度检查
+    # Stricter password strength check
     if settings.admin_password:
-        admin_checks = _detailed_password_check(settings.admin_password, "管理员")
+        admin_checks = _detailed_password_check(settings.admin_password, "Admin")
         errors.extend(admin_checks[0])
         warnings.extend(admin_checks[1])
 
     if settings.access_password:
-        access_checks = _detailed_password_check(settings.access_password, "访问")
+        access_checks = _detailed_password_check(settings.access_password, "Access")
         errors.extend(access_checks[0])
         warnings.extend(access_checks[1])
 
-    # 额外安全检查
+    # Additional security checks
     if settings.debug and settings.debug is True:
-        warnings.append("⚠️ 调试模式已启用，生产环境应关闭")
+        warnings.append("⚠️ Debug mode is enabled, should be disabled in production")
 
-    # 检查是否使用了默认密码
-    if settings.admin_password in ["Wuya2bu2.egozone", "admin123", "password", "123456", "admin"]:
-        errors.append("❌ 检测到使用默认管理员密码，请立即修改")
+    # Check if default passwords are used
+    if settings.admin_password in [
+        "Wuya2bu2.egozone",
+        "admin123",
+        "password",
+        "123456",
+        "admin",
+    ]:
+        errors.append(
+            "❌ Detected use of default admin password, please change immediately"
+        )
 
-    if settings.access_password in ["123321abc0", "access123", "password", "123456", "access"]:
-        errors.append("❌ 检测到使用默认访问密码，请立即修改")
+    if settings.access_password in [
+        "123321abc0",
+        "access123",
+        "password",
+        "123456",
+        "access",
+    ]:
+        errors.append(
+            "❌ Detected use of default access password, please change immediately"
+        )
 
     return len(errors) == 0, errors, warnings
 
 
-def _detailed_password_check(password: str, password_type: str) -> Tuple[List[str], List[str]]:
+def _detailed_password_check(
+    password: str, password_type: str
+) -> Tuple[List[str], List[str]]:
     """
-    详细密码检查
-    返回: (错误列表, 警告列表)
+    Detailed password check
+    Returns: (error list, warning list)
     """
     errors = []
     warnings = []
 
     if len(password) < 12:
-        errors.append(f"❌ {password_type}密码长度至少为12位")
+        errors.append(f"❌ {password_type} password must be at least 12 characters")
 
-    if not re.search(r'[A-Z]', password):
-        errors.append(f"❌ {password_type}密码必须包含大写字母")
+    if not re.search(r"[A-Z]", password):
+        errors.append(f"❌ {password_type} password must contain uppercase letters")
 
-    if not re.search(r'[a-z]', password):
-        errors.append(f"❌ {password_type}密码必须包含小写字母")
+    if not re.search(r"[a-z]", password):
+        errors.append(f"❌ {password_type} password must contain lowercase letters")
 
-    if not re.search(r'\d', password):
-        errors.append(f"❌ {password_type}密码必须包含数字")
+    if not re.search(r"\d", password):
+        errors.append(f"❌ {password_type} password must contain digits")
 
     if not re.search(r'[!@#$%^&*(),.?":{}|<>[\]\\`~;\'_+=)(*-]', password):
-        errors.append(f"❌ {password_type}密码必须包含特殊字符")
+        errors.append(f"❌ {password_type} password must contain special characters")
 
-    # 检查常见弱密码模式
+    # Check common weak password patterns
     weak_patterns = [
-        (r'(.)\1{2,}', f"{password_type}密码不应包含连续重复字符"),
-        (r'(123|abc|qwe|asd)', f"{password_type}密码不应包含常见字符序列"),
-        (r'(password|admin|access|changeme|default)', f"{password_type}密码不应包含常见词汇"),
+        (
+            r"(.)\1{2,}",
+            f"{password_type} password should not contain consecutive repeated characters",
+        ),
+        (
+            r"(123|abc|qwe|asd)",
+            f"{password_type} password should not contain common character sequences",
+        ),
+        (
+            r"(password|admin|access|changeme|default)",
+            f"{password_type} password should not contain common words",
+        ),
     ]
 
     for pattern, msg in weak_patterns:
         if re.search(pattern, password.lower()):
             warnings.append(f"⚠️ {msg}")
 
-    # 检查字符复杂度
+    # Check character complexity
     unique_chars = len(set(password))
     if unique_chars < len(password) * 0.6:
-        warnings.append(f"⚠️ {password_type}密码字符多样性不足")
+        warnings.append(
+            f"⚠️ {password_type} password has insufficient character diversity"
+        )
 
     return errors, warnings
 
 
 def print_security_report(is_secure: bool, errors: List[str], warnings: List[str]):
-    """打印安全报告"""
-    print("\n🔒 安全配置检查报告")
+    """Print security report"""
+    print("\n🔒 Security Configuration Check Report")
     print("=" * 40)
 
     if errors:
-        print("\n🚨 检测到以下安全问题:")
+        print("\n🚨 Detected the following security issues:")
         for error in errors:
             print(f"   {error}")
 
     if warnings:
-        print("\n⚠️ 检测到以下安全警告:")
+        print("\n⚠️ Detected the following security warnings:")
         for warning in warnings:
             print(f"   {warning}")
 
     if not errors and not warnings:
-        print("\n✅ 所有安全检查均已通过")
+        print("\n✅ All security checks passed")
     elif not errors and warnings:
-        print(f"\n⚠️ 基础安全要求已满足，但建议处理 {len(warnings)} 个安全警告")
+        print(
+            f"\n⚠️ Basic security requirements met, but recommend addressing {len(warnings)} security warnings"
+        )
     elif errors:
-        print(f"\n❌ 检测到 {len(errors)} 个严重安全问题，必须修复后才能启动服务")
+        print(
+            f"\n❌ Detected {len(errors)} critical security issues, must fix before starting service"
+        )
 
     print("=" * 40)
 
