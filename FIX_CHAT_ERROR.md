@@ -1,43 +1,43 @@
-# EgoZone 聊天错误修复说明
+# EgoZone Chat Error Fix Instructions
 
-如果你在使用 EgoZone 时遇到聊天功能报错，很可能是由于 Google Cloud 配置问题。以下是解决方案：
+If you encounter chat functionality errors while using EgoZone, it is likely due to Google Cloud configuration issues. Here are the solutions:
 
-## 问题原因
+## Root Cause
 
-错误通常是这样的：
+The error typically looks like this:
 ```
 404 Publisher Model `projects/.../models/gemini-...` was not found or your project does not have access to it
 ```
 
-这是因为在没有正确配置 Google Cloud 或无效的 Gemini API 访问权限时，应用无法连接到 Gemini 模型。
+This occurs because the application cannot connect to the Gemini model when Google Cloud is not properly configured or when Gemini API access is invalid.
 
-## 解决方案
+## Solutions
 
-### 方案1：使用 Google AI Studio API（推荐）
+### Solution 1: Use Google AI Studio API (Recommended)
 
-1. 访问 [Google AI Studio](https://aistudio.google.com/) 并获取 API 密钥
-2. 编辑 `.env` 文件，设置：
+1. Visit [Google AI Studio](https://aistudio.google.com/) and get an API key
+2. Edit the `.env` file and set:
    ```
    GEMINI_API_KEY=your_actual_api_key_here
    GEMINI_MODEL=gemini-1.5-pro
    ```
-3. 重启应用
+3. Restart the application
 
-### 方案2：配置 Vertex AI（适用于已有 GCP 环境的用户）
+### Solution 2: Configure Vertex AI (For users with existing GCP environment)
 
-1. 确保已正确配置 Google Cloud 项目
-2. 启用 Vertex AI API
-3. 确保项目 ID 和区域设置正确
-4. 确保有适当的 IAM 权限
+1. Ensure Google Cloud project is properly configured
+2. Enable Vertex AI API
+3. Ensure project ID and region settings are correct
+4. Ensure appropriate IAM permissions are granted
 
-## 主要改进
+## Key Improvements
 
-我们已更新 `core/gemini_client.py` 文件以支持双模式：
+We have updated the `core/gemini_client.py` file to support dual mode:
 
-- 当提供了 `GEMINI_API_KEY` 时，使用 Google AI Studio API
-- 当未提供 `GEMINI_API_KEY` 时，回退到 Vertex AI
-- 这样用户可以选择更容易上手的 API Key 方式
+- When `GEMINI_API_KEY` is provided, uses Google AI Studio API
+- When `GEMINI_API_KEY` is not provided, falls back to Vertex AI
+- This allows users to choose the easier API Key approach
 
-## 验证修复
+## Verify Fix
 
-设置好 API 密钥后，应用应该能正常处理聊天请求而不再报错。
+After setting up the API key, the application should handle chat requests normally without errors.

@@ -1,151 +1,151 @@
-# EgoZone GCP 部署指南
+# EgoZone GCP Deployment Guide
 
-## 前置条件
+## Prerequisites
 
-1. **GCP 账号**：需要有 Google Cloud Platform 账号
-2. **gcloud CLI**：已安装并完成认证
-3. **域名**：已购买并准备好的域名
+1. **GCP Account**: Need a Google Cloud Platform account
+2. **gcloud CLI**: Installed and authenticated
+3. **Domain Name**: Purchased and ready domain name
 
-## 快速部署
+## Quick Deployment
 
-### 1. 安装 gcloud CLI（如未安装）
+### 1. Install gcloud CLI (if not installed)
 
 ```bash
 # macOS
 brew install google-cloud-sdk
 
-# 或者从官网下载
+# Or download from official website
 # https://cloud.google.com/sdk/docs/install
 ```
 
-### 2. 认证并设置项目
+### 2. Authenticate and Set Project
 
 ```bash
-# 登录 GCP
+# Login to GCP
 gcloud auth login
 
-# 创建新项目（如果需要）
+# Create new project (if needed)
 gcloud projects create egozone --name="EgoZone"
 
-# 设置当前项目
+# Set current project
 gcloud config set project egozone
 
-# 关联计费账号（必须）
+# Link billing account (required)
 gcloud billing projects link egozone --billing-account=YOUR_BILLING_ACCOUNT_ID
 ```
 
-### 3. 设置环境变量
+### 3. Set Environment Variables
 
 ```bash
-# 设置项目 ID
+# Set project ID
 export GCP_PROJECT_ID="egozone"
 
-# 设置区域（推荐亚洲区域）
-export GCP_REGION="asia-east1"  # 台湾，网络延迟较低
+# Set region (Asian region recommended)
+export GCP_REGION="asia-east1"  # Taiwan, lower network latency
 
-# 注意：无需设置 GEMINI_API_KEY
-# 本项目使用 Vertex AI 服务账号自动认证
+# Note: No need to set GEMINI_API_KEY
+# This project uses Vertex AI service account for automatic authentication
 ```
 
-### 4. 一键部署
+### 4. One-Click Deployment
 
 ```bash
-# 进入项目目录
+# Enter project directory
 cd /Users/ezio/Documents/My\ Projects/EgoZone
 
-# 运行部署脚本
+# Run deployment script
 ./deploy.sh
 ```
 
-## 配置自定义域名
+## Configure Custom Domain
 
-### 方式一：使用 Cloud Run 域名映射
+### Method 1: Use Cloud Run Domain Mapping
 
 ```bash
-# 验证域名所有权（首次需要）
+# Verify domain ownership (required for first time)
 gcloud domains verify egoz.one
 
-# 创建域名映射
+# Create domain mapping
 gcloud run domain-mappings create \
     --service=egozone \
     --domain=egoz.one \
     --region=asia-east1
 
-# 查看 DNS 配置要求
+# View DNS configuration requirements
 gcloud run domain-mappings describe \
     --domain=egoz.one \
     --region=asia-east1
 ```
 
-### DNS 配置
+### DNS Configuration
 
-在你的域名 DNS 设置中添加：
+Add the following in your domain DNS settings:
 
-| 类型 | 名称 | 值 |
-|------|------|------|
-| A | @ | 负载均衡器 IP |
+| Type | Name | Value |
+|------|------|-------|
+| A | @ | Load Balancer IP |
 | CNAME | www | egoz.one |
 
-## 成本估算
+## Cost Estimation
 
-| 服务 | 估算费用（月） |
-|------|----------------|
-| Cloud Run | $5-20（按实际使用） |
-| Cloud Build | 免费（前 120 分钟/天） |
+| Service | Estimated Cost (Monthly) |
+|---------|--------------------------|
+| Cloud Run | $5-20 (pay as you go) |
+| Cloud Build | Free (first 120 minutes/day) |
 | Cloud Storage | $1-2 |
-| Load Balancer | $18+（如使用） |
-| **总计** | **$5-40** |
+| Load Balancer | $18+ (if used) |
+| **Total** | **$5-40** |
 
-> 💡 Cloud Run 在无请求时可缩容到 0 实例，非常经济
+> 💡 Cloud Run can scale down to 0 instances when there are no requests, very economical
 
-## 常用命令
+## Common Commands
 
 ```bash
-# 查看服务状态
+# View service status
 gcloud run services describe egozone --region=asia-east1
 
-# 查看日志
+# View logs
 gcloud run services logs read egozone --region=asia-east1
 
-# 更新环境变量（示例）
+# Update environment variables (example)
 gcloud run services update egozone \
     --region=asia-east1 \
-    --set-env-vars "ADMIN_PASSWORD=新密码"
+    --set-env-vars "ADMIN_PASSWORD=new_password"
 
-# 回滚到上一版本
+# Rollback to previous version
 gcloud run services update-traffic egozone \
     --region=asia-east1 \
     --to-revisions=REVISION_NAME=100
 
-# 删除服务
+# Delete service
 gcloud run services delete egozone --region=asia-east1
 ```
 
-## 故障排查
+## Troubleshooting
 
-### 服务无法启动
+### Service Won't Start
 
 ```bash
-# 查看详细日志
+# View detailed logs
 gcloud run services logs read egozone --region=asia-east1 --limit=50
 
-# 检查服务状态
+# Check service status
 gcloud run services describe egozone --region=asia-east1 --format="yaml(status)"
 ```
 
-### 域名无法访问
+### Domain Cannot Be Accessed
 
-1. 检查 DNS 是否已生效：`dig 你的域名.com`
-2. SSL 证书签发可能需要 24 小时
-3. 确认域名已验证所有权
+1. Check if DNS has propagated: `dig your-domain.com`
+2. SSL certificate issuance may take up to 24 hours
+3. Confirm domain ownership has been verified
 
-## 自动化部署（CI/CD）
+## Automated Deployment (CI/CD)
 
-项目已包含 `cloudbuild.yaml`，可配置自动部署：
+The project includes `cloudbuild.yaml` for automated deployment configuration:
 
-1. 在 Cloud Build 中创建触发器
-2. 连接 GitHub/GitLab 仓库
-3. 设置触发条件（如 push 到 main 分支）
-4. 无需配置 API Key（使用 Vertex AI 服务账号）
+1. Create a trigger in Cloud Build
+2. Connect GitHub/GitLab repository
+3. Set trigger conditions (e.g., push to main branch)
+4. No need to configure API Key (uses Vertex AI service account)
 
-每次代码推送后会自动构建并部署！
+Each code push will automatically build and deploy!
