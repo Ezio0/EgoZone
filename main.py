@@ -1,6 +1,6 @@
 """
-EgoZone - AI 数字分身
-主应用入口
+EgoZone - AI Digital Twin
+Main Application Entry Point
 """
 
 from fastapi import FastAPI
@@ -12,13 +12,13 @@ from pathlib import Path
 
 from config import get_settings
 from api import chat, knowledge, interview, auth, settings
-from api.documents import router as documents_router  # 新增文档导入路由
+from api.documents import router as documents_router  # Document import router
 from core.gemini_client import GeminiClient
 from core.personality_engine import PersonalityEngine
 from core.knowledge_base import KnowledgeBase
 from core.user_profile import UserProfileManager
 
-# 全局实例
+# Global instances
 gemini_client: GeminiClient = None
 personality_engine: PersonalityEngine = None
 knowledge_base: KnowledgeBase = None
@@ -27,100 +27,104 @@ profile_manager: UserProfileManager = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """应用生命周期管理"""
+    """Application lifecycle management"""
     global gemini_client, personality_engine, knowledge_base, profile_manager
-    
+
     settings = get_settings()
-    
-    # 初始化核心组件
-    print("🚀 正在初始化 EgoZone...")
-    
-    # 严格安全检查 - 发现问题时阻止启动
-    print("🔒 执行安全检查...")
-    from core.enhanced_security import enhanced_security_validation, print_security_report
+
+    # Initialize core components
+    print("🚀 Initializing EgoZone...")
+
+    # Strict security check - block startup if issues found
+    print("🔒 Running security checks...")
+    from core.enhanced_security import (
+        enhanced_security_validation,
+        print_security_report,
+    )
+
     is_secure, errors, warnings = enhanced_security_validation()
     print_security_report(is_secure, errors, warnings)
 
-    if not is_secure:
-        print("\n❌ 发现严重安全问题，服务启动已阻止")
-        print("🔧 请修复上述问题后再启动服务")
-        raise RuntimeError("安全配置检查失败，服务启动已中止")
+if not is_secure:
+        print("\n❌ Critical security issues found, service startup blocked")
+        print("🔧 Please fix the above issues before starting the service")
+        raise RuntimeError("Security configuration check failed, service startup aborted")
     
-    # 清理过期令牌和限流数据
-    print("🧹 清理过期数据...")
+    # Clean up expired tokens and rate limit data
+    print("🧹 Cleaning up expired data...")
     from core.token_storage import get_token_storage
     from core.rate_limiter import cleanup_rate_limit_data
-    
+
     token_storage = get_token_storage()
-    cleaned_tokens = token_storage.cleanup_expired_tokens()
+cleaned_tokens = token_storage.cleanup_expired_tokens()
     if cleaned_tokens > 0:
-        print(f"✅ 已清理 {cleaned_tokens} 个过期令牌")
+        print(f"✅ Cleaned up {cleaned_tokens} expired tokens")
     
-    # 清理限流数据
+    # Clean up rate limit data
     try:
         cleanup_rate_limit_data()
-        print("✅ 限流数据清理完成")
+        print("✅ Rate limit data cleanup completed")
     except Exception as e:
-        print(f"⚠️  限流数据清理失败: {e}")
-    
-    # Gemini 客户端 (支持 Vertex AI 和 Google AI Studio API 两种模式)
+        print(f"⚠️  Rate limit data cleanup failed: {e}")
+
+    # Gemini client (supports both Vertex AI and Google AI Studio API modes)
     gemini_client = GeminiClient(
         project_id=settings.gcp_project,
         location=settings.gcp_location,
         model_name=settings.gemini_model,
-        api_key=settings.gemini_api_key
+        api_key=settings.gemini_api_key,
     )
-    
-    # 知识库
+
+# Knowledge base
     knowledge_base = KnowledgeBase()
     await knowledge_base.initialize()
     
-    # 用户画像管理
+    # User profile manager
     profile_manager = UserProfileManager()
     await profile_manager.initialize()
     
-    # 个性化引擎
+    # Personality engine
     personality_engine = PersonalityEngine(
         gemini_client=gemini_client,
         knowledge_base=knowledge_base,
-        profile_manager=profile_manager
+        profile_manager=profile_manager,
     )
-    
-    print("✅ EgoZone 初始化完成!")
-    print(f"📡 使用模型: {settings.gemini_model}")
+
+print("✅ EgoZone initialization complete!")
+    print(f"📡 Using model: {settings.gemini_model}")
     
     yield
     
-    # 清理资源
-    print("👋 EgoZone 正在关闭...")
+    # Cleanup resources
+    print("👋 EgoZone is shutting down...")
 
 
-# 创建 FastAPI 应用
+# Create FastAPI application
 app = FastAPI(
     title="EgoZone API",
-    description="AI 数字分身 API 服务",
+    description="AI Digital Twin API Service",
     version="0.1.0",
     lifespan=lifespan
 )
 
-# CORS 配置
+# CORS configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境需要限制
+    allow_origins=["*"],  # Should be restricted in production
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 注册路由
-app.include_router(chat.router, prefix="/api/chat", tags=["对话"])
-app.include_router(knowledge.router, prefix="/api/knowledge", tags=["知识库"])
-app.include_router(interview.router, prefix="/api/interview", tags=["问答采集"])
-app.include_router(auth.router, prefix="/api/auth", tags=["认证"])
-app.include_router(settings.router, prefix="/api/settings", tags=["设置"])
-app.include_router(documents_router, tags=["文档导入"])  # 新增文档导入路由
+# Register routes
+app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+app.include_router(knowledge.router, prefix="/api/knowledge", tags=["Knowledge Base"])
+app.include_router(interview.router, prefix="/api/interview", tags=["Interview"])
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(settings.router, prefix="/api/settings", tags=["Settings"])
+app.include_router(documents_router, tags=["Document Import"])  # Document import router
 
-# 静态文件服务
+# Static file serving
 WEB_DIR = Path(__file__).parent / "web"
 if WEB_DIR.exists():
     app.mount("/static", StaticFiles(directory=str(WEB_DIR)), name="static")
@@ -128,13 +132,13 @@ if WEB_DIR.exists():
 
 @app.get("/")
 async def root():
-    """Web 首页"""
+    """Web homepage"""
     index_file = WEB_DIR / "index.html"
     if index_file.exists():
         return FileResponse(index_file)
     return {
         "name": "EgoZone",
-        "description": "AI 数字分身服务",
+        "description": "AI Digital Twin Service",
         "version": "0.1.0",
         "status": "running",
         "web_ui": "/static/index.html"
@@ -143,20 +147,20 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """健康检查"""
+    """Health check"""
     return {"status": "healthy"}
 
 
 def get_personality_engine() -> PersonalityEngine:
-    """获取个性化引擎实例"""
+    """Get personality engine instance"""
     return personality_engine
 
 
 def get_knowledge_base() -> KnowledgeBase:
-    """获取知识库实例"""
+    """Get knowledge base instance"""
     return knowledge_base
 
 
 def get_profile_manager() -> UserProfileManager:
-    """获取用户画像管理器"""
+    """Get user profile manager instance"""
     return profile_manager
