@@ -55,3 +55,9 @@ EgoZone is a personal AI digital twin system based on Google Gemini, featuring p
 - Project uses Vertex AI SDK, requires proper GCP credential configuration
 - Conversation history is stored in memory, can be persisted via GCS
 - Default admin and access passwords need to be changed in production environment
+
+## Language Requirements
+- All documentation, comments, and code-level explanations MUST be written in English
+- This includes: README files, inline comments, docstrings, commit messages, and PR descriptions
+- Variable names, function names, and class names should use English
+- Keep the entire codebase English-only for consistency and international collaboration
