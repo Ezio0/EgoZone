@@ -1,13 +1,13 @@
 steps:
-  # 构建 Docker 镜像
+  # Build Docker image
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/egozone:$COMMIT_SHA', '.']
 
-  # 推送到 Container Registry
+  # Push to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/egozone:$COMMIT_SHA']
 
-  # 部署到 Cloud Run
+  # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     entrypoint: gcloud
     args:
@@ -28,4 +28,4 @@ images:
   - 'gcr.io/$PROJECT_ID/egozone:$COMMIT_SHA'
 
 substitutions:
-  _GEMINI_API_KEY: ''  # 在 Cloud Build 触发器中设置
+  _GEMINI_API_KEY: ''  # Set in Cloud Build trigger
