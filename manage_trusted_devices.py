@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-EgoZone 信任设备管理工具
-用于预配置信任设备（家里的电脑、公司的电脑和手机）
+EgoZone Trusted Device Management Tool
+For pre-configuring trusted devices (home computer, work computer, and mobile phone)
 """
 
 import json
@@ -14,136 +14,149 @@ TRUSTED_DEVICES_FILE = "data/trusted_devices.json"
 
 
 def initialize_trusted_devices():
-    """初始化信任设备列表，预配置常见的信任设备"""
+    """Initialize trusted devices list with pre-configured common trusted devices"""
 
-    # 示例设备指纹和名称
+    # Example device fingerprints and names
     trusted_devices = {
-        # 家里电脑示例 - 实际使用时需要根据实际设备信息生成
+        # Home computer example - actual fingerprint should be generated from real device info when used
         "home_computer_fingerprint_placeholder": {
-            "name": "家里的电脑",
+            "name": "Home Computer",
             "added_at": datetime.now().isoformat(),
             "last_used": datetime.now().isoformat(),
-            "user_agent": "Placeholder for home computer"
+            "user_agent": "Placeholder for home computer",
         },
-        # 公司电脑示例
+        # Work computer example
         "work_computer_fingerprint_placeholder": {
-            "name": "公司的电脑",
+            "name": "Work Computer",
             "added_at": datetime.now().isoformat(),
             "last_used": datetime.now().isoformat(),
-            "user_agent": "Placeholder for work computer"
+            "user_agent": "Placeholder for work computer",
         },
-        # 手机示例（可能有多种设备类型）
+        # Mobile phone example (may have multiple device types)
         "mobile_phone_fingerprint_placeholder": {
-            "name": "个人手机",
+            "name": "Personal Mobile Phone",
             "added_at": datetime.now().isoformat(),
             "last_used": datetime.now().isoformat(),
-            "user_agent": "Placeholder for mobile phone"
-        }
+            "user_agent": "Placeholder for mobile phone",
+        },
     }
 
-    # 确保目录存在
+    # Ensure directory exists
     os.makedirs(os.path.dirname(TRUSTED_DEVICES_FILE), exist_ok=True)
 
-    # 保存信任设备列表
-    with open(TRUSTED_DEVICES_FILE, 'w', encoding='utf-8') as f:
+    # Save trusted devices list
+    with open(TRUSTED_DEVICES_FILE, "w", encoding="utf-8") as f:
         json.dump(trusted_devices, f, ensure_ascii=False, indent=2)
 
-    print(f"✅ 信任设备列表已创建: {TRUSTED_DEVICES_FILE}")
-    print("📝 注意：您需要将实际的设备指纹替换占位符")
-    print("💡 您可以通过首次在信任设备上登录并在请求中勾选“信任此设备”来自动生成指纹")
+    print(f"✅ Trusted devices list created: {TRUSTED_DEVICES_FILE}")
+    print("📝 Note: You need to replace placeholders with actual device fingerprints")
+    print(
+        "💡 You can auto-generate fingerprints by logging in from a trusted device and checking 'Trust this device'"
+    )
 
 
 def add_trusted_device(device_fingerprint: str, device_name: str):
-    """添加一个信任设备"""
+    """Add a trusted device"""
 
-    # 加载现有信任设备
+    # Load existing trusted devices
     if os.path.exists(TRUSTED_DEVICES_FILE):
-        with open(TRUSTED_DEVICES_FILE, 'r', encoding='utf-8') as f:
+        with open(TRUSTED_DEVICES_FILE, "r", encoding="utf-8") as f:
             trusted_devices = json.load(f)
     else:
         trusted_devices = {}
 
-    # 添加新设备
+    # Add new device
     trusted_devices[device_fingerprint] = {
         "name": device_name,
         "added_at": datetime.now().isoformat(),
         "last_used": datetime.now().isoformat(),
-        "user_agent": "Added via management script"
+        "user_agent": "Added via management script",
     }
 
-    # 确保目录存在
+    # Ensure directory exists
     os.makedirs(os.path.dirname(TRUSTED_DEVICES_FILE), exist_ok=True)
 
-    # 保存更新后的信任设备列表
-    with open(TRUSTED_DEVICES_FILE, 'w', encoding='utf-8') as f:
+    # Save updated trusted devices list
+    with open(TRUSTED_DEVICES_FILE, "w", encoding="utf-8") as f:
         json.dump(trusted_devices, f, ensure_ascii=False, indent=2)
 
-    print(f"✅ 设备 '{device_name}' 已添加到信任列表")
+    print(f"✅ Device '{device_name}' has been added to the trusted list")
 
 
 def list_trusted_devices():
-    """列出所有信任设备"""
+    """List all trusted devices"""
 
     if not os.path.exists(TRUSTED_DEVICES_FILE):
-        print("❌ 信任设备列表不存在")
+        print("❌ Trusted devices list does not exist")
         return
 
-    with open(TRUSTED_DEVICES_FILE, 'r', encoding='utf-8') as f:
+    with open(TRUSTED_DEVICES_FILE, "r", encoding="utf-8") as f:
         trusted_devices = json.load(f)
 
     if not trusted_devices:
-        print("📭 没有信任设备")
+        print("📭 No trusted devices")
         return
 
-    print(f"📋 信任设备列表 (共 {len(trusted_devices)} 台设备):")
+    print(f"📋 Trusted devices list ({len(trusted_devices)} devices):")
     for fingerprint, info in trusted_devices.items():
-        print(f"  • {info['name']} (指纹: {fingerprint[:16]}...) - 添加时间: {info['added_at']}")
+        print(
+            f"  • {info['name']} (fingerprint: {fingerprint[:16]}...) - added: {info['added_at']}"
+        )
 
 
 def remove_trusted_device(device_fingerprint: str):
-    """移除信任设备"""
+    """Remove a trusted device"""
 
     if not os.path.exists(TRUSTED_DEVICES_FILE):
-        print("❌ 信任设备列表不存在")
+        print("❌ Trusted devices list does not exist")
         return
 
-    with open(TRUSTED_DEVICES_FILE, 'r', encoding='utf-8') as f:
+    with open(TRUSTED_DEVICES_FILE, "r", encoding="utf-8") as f:
         trusted_devices = json.load(f)
 
     if device_fingerprint in trusted_devices:
-        device_name = trusted_devices[device_fingerprint]['name']
+        device_name = trusted_devices[device_fingerprint]["name"]
         del trusted_devices[device_fingerprint]
 
-        with open(TRUSTED_DEVICES_FILE, 'w', encoding='utf-8') as f:
+        with open(TRUSTED_DEVICES_FILE, "w", encoding="utf-8") as f:
             json.dump(trusted_devices, f, ensure_ascii=False, indent=2)
 
-        print(f"✅ 设备 '{device_name}' 已从信任列表中移除")
+        print(f"✅ Device '{device_name}' has been removed from the trusted list")
     else:
-        print(f"❌ 指纹为 {device_fingerprint} 的设备不在信任列表中")
+        print(
+            f"❌ Device with fingerprint {device_fingerprint} is not in the trusted list"
+        )
 
 
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description='EgoZone 信任设备管理工具')
-    parser.add_argument('action', choices=['init', 'list', 'add', 'remove'],
-                        help='操作类型: init(初始化), list(列出), add(添加), remove(移除)')
-    parser.add_argument('--fingerprint', type=str, help='设备指纹')
-    parser.add_argument('--name', type=str, help='设备名称')
+    parser = argparse.ArgumentParser(
+        description="EgoZone Trusted Device Management Tool"
+    )
+    parser.add_argument(
+        "action",
+        choices=["init", "list", "add", "remove"],
+        help="Action type: init(initialize), list(list), add(add), remove(remove)",
+    )
+    parser.add_argument("--fingerprint", type=str, help="Device fingerprint")
+    parser.add_argument("--name", type=str, help="Device name")
 
     args = parser.parse_args()
 
-    if args.action == 'init':
+    if args.action == "init":
         initialize_trusted_devices()
-    elif args.action == 'list':
+    elif args.action == "list":
         list_trusted_devices()
-    elif args.action == 'add':
+    elif args.action == "add":
         if not args.fingerprint or not args.name:
-            print("❌ 添加设备需要同时提供 --fingerprint 和 --name 参数")
+            print(
+                "❌ Adding a device requires both --fingerprint and --name parameters"
+            )
         else:
             add_trusted_device(args.fingerprint, args.name)
-    elif args.action == 'remove':
+    elif args.action == "remove":
         if not args.fingerprint:
-            print("❌ 移除设备需要提供 --fingerprint 参数")
+            print("❌ Removing a device requires --fingerprint parameter")
         else:
             remove_trusted_device(args.fingerprint)
