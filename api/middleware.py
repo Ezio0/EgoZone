@@ -1,6 +1,6 @@
 """
-EgoZone 认证中间件
-用于保护API端点，集成新的持久化令牌存储系统
+EgoZone Authentication Middleware
+Protects API endpoints and integrates new persistent token storage system
 """
 
 from fastapi import HTTPException, Request
@@ -11,12 +11,13 @@ import json
 import os
 from pathlib import Path
 
-# 使用新的令牌存储系统
+# Use new token storage system
 from core.token_storage import get_token_storage
 
 
 class TokenData(BaseModel):
-    """令牌数据模型"""
+    """Token data model"""
+
     token: str
     token_type: str
     user_agent: Optional[str] = None
@@ -25,93 +26,99 @@ class TokenData(BaseModel):
     expires_at: Optional[str] = None
 
 
-# 安全HTTP Bearer认证
+# Secure HTTP Bearer authentication
 security = HTTPBearer()
 
 
 def load_access_tokens():
-    """从文件加载访问令牌（向后兼容）"""
+    """Load access tokens from file (backward compatible)"""
     token_file = Path("./data/access_tokens.json")
-    
+
     if token_file.exists():
         try:
-            with open(token_file, 'r', encoding='utf-8') as f:
+            with open(token_file, "r", encoding="utf-8") as f:
                 old_tokens = json.load(f)
-            
-            # 迁移旧令牌到新的存储系统
+
+            # Migrate old tokens to new storage system
             token_storage = get_token_storage()
             migrated_count = 0
-            
+
             for token, token_info in old_tokens.items():
                 try:
                     from datetime import datetime, timedelta
-                    created_at = datetime.fromisoformat(token_info.get('created_at', datetime.now().isoformat()))
-                    token_type = token_info.get('type', 'access')
-                    
-                    # 只迁移未过期的令牌（24小时内）
+
+                    created_at = datetime.fromisoformat(
+                        token_info.get("created_at", datetime.now().isoformat())
+                    )
+                    token_type = token_info.get("type", "access")
+
+                    # Only migrate non-expired tokens (within 24 hours)
                     if datetime.now() - created_at < timedelta(hours=24):
-                        token_storage._add_token_to_memory(token, token_type, created_at)
+                        token_storage._add_token_to_memory(
+                            token, token_type, created_at
+                        )
                         migrated_count += 1
                 except Exception as e:
-                    print(f"迁移令牌失败: {e}")
-            
-            print(f"已迁移 {migrated_count} 个旧令牌到新的存储系统")
-            
-            # 备份旧文件
-            backup_file = token_file.with_suffix('.json.backup')
+                    print(f"Failed to migrate token: {e}")
+
+            print(f"Migrated {migrated_count} old tokens to new storage system")
+
+            # Backup old file
+            backup_file = token_file.with_suffix(".json.backup")
             token_file.rename(backup_file)
-            print(f"旧令牌文件已备份到: {backup_file}")
-            
+            print(f"Old token file backed up to: {backup_file}")
+
         except Exception as e:
-            print(f"加载访问令牌失败: {e}")
+            print(f"Failed to load access tokens: {e}")
 
 
 def is_access_token_valid(token: str) -> bool:
-    """检查访问令牌是否有效"""
+    """Check if access token is valid"""
     if not token:
         return False
-    
+
     try:
         token_storage = get_token_storage()
-        return token_storage.validate_token(token, 'access')
+        return token_storage.validate_token(token, "access")
     except Exception as e:
-        print(f"访问令牌验证失败: {e}")
+        print(f"Access token validation failed: {e}")
         return False
 
 
 def is_admin_token_valid(token: str) -> bool:
-    """检查管理员令牌是否有效"""
+    """Check if admin token is valid"""
     if not token:
         return False
-    
+
     try:
         token_storage = get_token_storage()
-        return token_storage.validate_token(token, 'admin')
+        return token_storage.validate_token(token, "admin")
     except Exception as e:
-        print(f"管理员令牌验证失败: {e}")
+        print(f"Admin token validation failed: {e}")
         return False
 
 
 def require_access_token(token: str) -> bool:
-    """检查是否需要访问令牌 (根据配置决定)"""
+    """Check if access token is required (based on config)"""
     from config import get_settings
+
     settings = get_settings()
 
-    # 如果设置了访问密码，则需要验证
+    # If access password is set, verification is required
     return bool(settings.access_password)
 
 
 def verify_access_token(token: str) -> bool:
-    """验证访问令牌"""
+    """Verify access token"""
     if not token:
         return False
 
-    # 检查是否为有效的访问令牌或管理员令牌
+    # Check if it's a valid access token or admin token
     return is_access_token_valid(token) or is_admin_token_valid(token)
 
 
 def verify_admin_token(token: str) -> bool:
-    """验证管理员令牌"""
+    """Verify admin token"""
     if not token:
         return False
 
@@ -119,37 +126,37 @@ def verify_admin_token(token: str) -> bool:
 
 
 def extract_token_from_request(request: Request) -> Optional[str]:
-    """从请求中提取令牌"""
-    # 1. 尝试从 Authorization header 获取
+    """Extract token from request"""
+    # 1. Try to get from Authorization header
     auth_header = request.headers.get("Authorization")
     if auth_header:
         if auth_header.startswith("Bearer "):
-            return auth_header[7:]  # 移除 "Bearer "
+            return auth_header[7:]  # Remove "Bearer "
         elif auth_header.startswith("Token "):
-            return auth_header[6:]  # 移除 "Token "
+            return auth_header[6:]  # Remove "Token "
         else:
             return auth_header
-    
-    # 2. 尝试从 X-Access-Token header 获取（向后兼容）
+
+    # 2. Try to get from X-Access-Token header (backward compatible)
     access_token = request.headers.get("X-Access-Token")
     if access_token:
         return access_token
-    
-    # 3. 尝试从 X-Admin-Token header 获取（向后兼容）
+
+    # 3. Try to get from X-Admin-Token header (backward compatible)
     admin_token = request.headers.get("X-Admin-Token")
     if admin_token:
         return admin_token
-    
+
     return None
 
 
 def validate_request_token(request: Request, require_admin: bool = False) -> bool:
-    """验证请求中的令牌"""
+    """Verify token in request"""
     token = extract_token_from_request(request)
-    
+
     if not token:
         return False
-    
+
     if require_admin:
         return verify_admin_token(token)
     else:
@@ -157,38 +164,38 @@ def validate_request_token(request: Request, require_admin: bool = False) -> boo
 
 
 def get_token_info(token: str) -> Optional[TokenData]:
-    """获取令牌信息"""
+    """Get token info"""
     if not token:
         return None
-    
+
     try:
         token_storage = get_token_storage()
         token_data = token_storage.get_token_info(token)
-        
+
         if token_data:
             return TokenData(
                 token=token,
-                token_type=token_data.get('type', 'unknown'),
-                user_agent=token_data.get('user_agent'),
-                ip_address=token_data.get('ip_address'),
-                created_at=token_data.get('created_at'),
-                expires_at=token_data.get('expires_at')
+                token_type=token_data.get("type", "unknown"),
+                user_agent=token_data.get("user_agent"),
+                ip_address=token_data.get("ip_address"),
+                created_at=token_data.get("created_at"),
+                expires_at=token_data.get("expires_at"),
             )
     except Exception as e:
-        print(f"获取令牌信息失败: {e}")
-    
+        print(f"Failed to get token info: {e}")
+
     return None
 
 
 def cleanup_expired_tokens() -> int:
-    """清理过期令牌"""
+    """Clean up expired tokens"""
     try:
         token_storage = get_token_storage()
         return token_storage.cleanup_expired_tokens()
     except Exception as e:
-        print(f"清理过期令牌失败: {e}")
+        print(f"Failed to clean up expired tokens: {e}")
         return 0
 
 
-# 初始化时加载旧令牌（如果存在）
+# Load old tokens at initialization (if they exist)
 load_access_tokens()
