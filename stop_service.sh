@@ -1,42 +1,42 @@
 #!/bin/bash
-# EgoZone 服务停止脚本
+# EgoZone service stop script
 
-echo "🛑 停止 EgoZone 服务..."
+echo "🛑 Stopping EgoZone service..."
 
-# 检查 PID 文件是否存在
+# Check if PID file exists
 if [ -f "egozone_server.pid" ]; then
     SERVER_PID=$(cat egozone_server.pid)
 
-    # 检查进程是否还在运行
+    # Check if process is still running
     if ps -p $SERVER_PID > /dev/null; then
-        echo "🔄 发送终止信号到 PID: $SERVER_PID"
+        echo "🔄 Sending termination signal to PID: $SERVER_PID"
         kill $SERVER_PID
 
-        # 等待进程结束
+        # Wait for process to end
         sleep 2
 
-        # 如果进程仍在运行，则强制终止
+        # If process is still running, force terminate
         if ps -p $SERVER_PID > /dev/null; then
-            echo "💥 强制终止进程 PID: $SERVER_PID"
+            echo "💥 Force terminating process PID: $SERVER_PID"
             kill -9 $SERVER_PID
         fi
 
-        # 删除 PID 文件
+        # Remove PID file
         rm egozone_server.pid
-        echo "✅ 服务已停止"
+        echo "✅ Service stopped"
     else
-        echo "⚠️  进程 PID $SERVER_PID 不存在"
+        echo "⚠️  Process PID $SERVER_PID does not exist"
         rm egozone_server.pid
     fi
 else
-    echo "🔍 未找到 PID 文件，搜索相关进程..."
+    echo "🔍 PID file not found, searching for related processes..."
     PIDS=$(ps aux | grep -E "uvicorn.*main" | grep -v grep | awk '{print $2}')
 
     if [ ! -z "$PIDS" ]; then
-        echo "🔄 停止找到的 EgoZone 进程: $PIDS"
+        echo "🔄 Stopping found EgoZone processes: $PIDS"
         kill $PIDS 2>/dev/null || kill -9 $PIDS 2>/dev/null
-        echo "✅ 服务已停止"
+        echo "✅ Service stopped"
     else
-        echo "✅ 未找到正在运行的 EgoZone 服务"
+        echo "✅ No running EgoZone service found"
     fi
 fi

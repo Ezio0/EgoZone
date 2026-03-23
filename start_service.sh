@@ -1,34 +1,34 @@
 #!/bin/bash
-# EgoZone 本地开发服务启动脚本
+# EgoZone local development service startup script
 
-echo "🚀 启动 EgoZone 本地开发服务..."
+echo "🚀 Starting EgoZone local development service..."
 
-# 检查虚拟环境是否存在
+# Check if virtual environment exists
 if [ ! -d "venv" ]; then
-    echo "❌ 虚拟环境不存在，请先运行: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
+    echo "❌ Virtual environment not found, please run: python -m venv venv && source venv/bin/activate && pip install -r requirements.txt"
     exit 1
 fi
 
-# 检查是否有服务正在运行
+# Check if a service is already running on the port
 if lsof -ti:8000; then
-    echo "⚠️  端口 8000 已被占用，尝试停止现有服务..."
-    lsof -ti:8000 | xargs kill -9 2>/dev/null || echo "未找到占用端口 8000 的进程"
+    echo "⚠️  Port 8000 is already in use, attempting to stop existing service..."
+    lsof -ti:8000 | xargs kill -9 2>/dev/null || echo "No process found using port 8000"
 fi
 
-# 激活虚拟环境并启动服务
-echo "🔌 激活虚拟环境..."
+# Activate virtual environment and start service
+echo "🔌 Activating virtual environment..."
 source venv/bin/activate
 
-echo "⚡ 启动 FastAPI 服务..."
-# 启动服务并将输出重定向到日志文件
+echo "⚡ Starting FastAPI service..."
+# Start service and redirect output to log file
 nohup uvicorn main:app --host 127.0.0.1 --port 8000 --reload > service_output.log 2>&1 &
 
 SERVER_PID=$!
-echo "✅ 服务已启动，PID: $SERVER_PID"
-echo "🌐 访问地址: http://127.0.0.1:8000"
+echo "✅ Service started, PID: $SERVER_PID"
+echo "🌐 Access URL: http://127.0.0.1:8000"
 
-# 写入 PID 到文件，以便将来停止服务
+# Write PID to file for future service stop
 echo $SERVER_PID > egozone_server.pid
 
-echo "📝 日志文件: service_output.log"
-echo "📌 要停止服务，请运行: ./stop_service.sh"
+echo "📝 Log file: service_output.log"
+echo "📌 To stop the service, run: ./stop_service.sh"
