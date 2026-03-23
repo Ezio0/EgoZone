@@ -2,56 +2,56 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-# EgoZone - AI 数字分身项目指南
+# EgoZone - AI Digital Twin Project Guide
 
-## 项目概述
-EgoZone 是一个基于 Google Gemini 的个人 AI 数字分身系统，具有个性化对话、知识库管理、语音交互和平台集成功能。
+## Project Overview
+EgoZone is a personal AI digital twin system based on Google Gemini, featuring personalized conversations, knowledge base management, voice interaction, and platform integration.
 
-## 技术架构
-- **后端**: Python FastAPI
-- **AI 引擎**: Google Gemini (通过 Vertex AI SDK)
-- **数据库**: SQLite (默认) 或 PostgreSQL + pgvector
-- **向量存储**: ChromaDB
-- **前端**: React + TypeScript (位于 web/ 目录)
+## Technical Architecture
+- **Backend**: Python FastAPI
+- **AI Engine**: Google Gemini (via Vertex AI SDK)
+- **Database**: SQLite (default) or PostgreSQL + pgvector
+- **Vector Store**: ChromaDB
+- **Frontend**: React + TypeScript (located in web/ directory)
 
-## 核心组件架构
-- [main.py](main.py): 应用入口，负责初始化所有核心组件
-- [core/](core/) 目录包含：
-  - [gemini_client.py](core/gemini_client.py): 封装 Vertex AI 客户端，处理 Gemini API 调用
-  - [personality_engine.py](core/personality_engine.py): 个性化对话引擎，整合用户画像、知识库和对话记忆
-  - [user_profile.py](core/user_profile.py): 用户画像管理系统
-  - [knowledge_base.py](core/knowledge_base.py): 知识库管理 (使用 ChromaDB)
-  - [memory.py](core/memory.py): 对话记忆和历史管理
-- [api/](api/) 目录包含所有 REST API 路由
+## Core Component Architecture
+- [main.py](main.py): Application entry point, responsible for initializing all core components
+- [core/](core/) directory contains:
+  - [gemini_client.py](core/gemini_client.py): Wraps Vertex AI client, handles Gemini API calls
+  - [personality_engine.py](core/personality_engine.py): Personalized conversation engine, integrates user profile, knowledge base, and conversation memory
+  - [user_profile.py](core/user_profile.py): User profile management system
+  - [knowledge_base.py](core/knowledge_base.py): Knowledge base management (using ChromaDB)
+  - [memory.py](core/memory.py): Conversation memory and history management
+- [api/](api/) directory contains all REST API routes
 
-## 开发命令
-- **安装依赖**: `pip install -r requirements.txt`
-- **运行开发服务器**: `python -m uvicorn main:app --reload`
-- **运行测试** (如果有): `pytest` 或 `python -m pytest`
-- **运行单个测试**: `python -m pytest path/to/test_file.py`
+## Development Commands
+- **Install Dependencies**: `pip install -r requirements.txt`
+- **Run Development Server**: `python -m uvicorn main:app --reload`
+- **Run Tests** (if available): `pytest` or `python -m pytest`
+- **Run Single Test**: `python -m pytest path/to/test_file.py`
 
-## 配置管理
-- 配置通过 [config.py](config.py) 中的 Settings 类管理
-- 环境变量存储在 `.env` 文件中 (参考 `.env.example`)
-- 主要配置包括：GCP 项目信息、Gemini 模型设置、数据库连接、管理员密码等
+## Configuration Management
+- Configuration is managed through the Settings class in [config.py](config.py)
+- Environment variables are stored in `.env` file (see `.env.example`)
+- Main configurations include: GCP project info, Gemini model settings, database connection, admin password, etc.
 
-## API 端点
-- `/api/chat/` - 对话功能 (发送消息、获取历史)
-- `/api/knowledge/` - 知识库管理
-- `/api/interview/` - 问答采集功能
-- `/api/auth/` - 认证功能
-- `/api/settings/` - 设置管理
+## API Endpoints
+- `/api/chat/` - Chat functionality (send messages, get history)
+- `/api/knowledge/` - Knowledge base management
+- `/api/interview/` - Q&A collection functionality
+- `/api/auth/` - Authentication functionality
+- `/api/settings/` - Settings management
 
-## 认证机制
-- 管理员功能需要密码保护 (默认密码在 config.py 中)
-- 对话功能有公共访问密码 (防止滥用)
+## Authentication Mechanism
+- Admin features require password protection (default password in config.py)
+- Chat functionality has public access password (to prevent abuse)
 
-## 部署选项
-- **本地运行**: 使用 uvicorn 直接启动
-- **容器化**: 使用 [Dockerfile](Dockerfile)，暴露 8080 端口
-- **GCP 部署**: 支持 Cloud Run 等部署方式 (参考 DEPLOY.md)
+## Deployment Options
+- **Local Run**: Start directly using uvicorn
+- **Containerized**: Use [Dockerfile](Dockerfile), exposes port 8080
+- **GCP Deployment**: Supports Cloud Run and other deployment methods (see DEPLOY.md)
 
-## 重要注意事项
-- 项目使用 Vertex AI SDK，需正确配置 GCP 凭据
-- 对话历史存储在内存中，可通过 GCS 持久化
-- 生产环境中需要更改默认的管理员和访问密码
+## Important Notes
+- Project uses Vertex AI SDK, requires proper GCP credential configuration
+- Conversation history is stored in memory, can be persisted via GCS
+- Default admin and access passwords need to be changed in production environment
